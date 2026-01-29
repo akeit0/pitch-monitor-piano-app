@@ -110,7 +110,7 @@
         l: 17,
     };
 
-    let keyMap = $state({ ...defaultKeyMap });
+    let keyMap: Record<string, number> = $state({ ...defaultKeyMap });
 
     onMount(async () => {
         try {
@@ -135,18 +135,44 @@
         // alert("Key configuration saved!"); // Auto-save silent
     }
 
-    function exportKeyMap() {
+    async function exportKeyMap() {
         // format as txt: key:offset per line
         const lines = Object.entries(keyMap).map(([k, v]) => `${k}:${v}`);
         const text = lines.join("\n");
-        const blob = new Blob([text], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "piano-keymap.txt";
-        a.click();
-        URL.revokeObjectURL(url);
+        try {
+            // @ts-ignore - File System Access API might not be in all TS configs
+            if (window.showSaveFilePicker) {
+                // @ts-ignore
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: "piano-keymap.txt",
+                    types: [
+                        {
+                            description: "Text Files",
+                            accept: { "text/plain": [".txt"] },
+                        },
+                    ],
+                });
+                const writable = await handle.createWritable();
+                await writable.write(text);
+                await writable.close();
+            } else {
+                const blob = new Blob([text], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "piano-keymap.txt";
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            // Ignore AbortError (user cancelled)
+            if ((err as Error).name !== "AbortError") {
+                console.error("Failed to save file:", err);
+                alert("Failed to save file");
+            }
+        }
     }
 
     function handleFileSelect(e: Event) {
@@ -174,7 +200,6 @@
 
             if (Object.keys(newMap).length > 0) {
                 saveKeyMap(newMap);
-                alert("Key map imported and saved!");
             } else {
                 alert("Invalid file format.");
             }
@@ -191,9 +216,10 @@
     <div class="controls-bar">
         <!-- Transpose Controls -->
         <div class="control-group">
-            <label>Transpose</label>
+            <label for="transpose-select">Transpose</label>
             <div class="transpose-controls">
                 <select
+                    id="transpose-select"
                     value={transpose}
                     onchange={(e) =>
                         handleTransposeChange(parseInt(e.currentTarget.value))}
@@ -211,8 +237,12 @@
 
         <!-- Range Controls -->
         <div class="control-group">
-            <label>Keyboard Size</label>
-            <select bind:value={selectedPreset} onchange={selectPreset}>
+            <label for="keyboard-size">Keyboard Size</label>
+            <select
+                id="keyboard-size"
+                bind:value={selectedPreset}
+                onchange={selectPreset}
+            >
                 <option value="88">88 Keys (Full)</option>
                 <option value="61">61 Keys</option>
                 <option value="49">49 Keys</option>
@@ -254,7 +284,7 @@
 
         <!-- Key Map Controls -->
         <div class="control-group">
-            <label>Key Map</label>
+            <label for="key-map">Key Map</label>
             <div class="buttons">
                 <button onclick={exportKeyMap}>Export</button>
                 <button onclick={resetKeyMap}>Reset Default</button>
@@ -404,7 +434,7 @@
         background-color: rgba(17, 24, 39, 0.5);
         border: 1px solid #1f2937;
         border-radius: 0.75rem;
-        padding: 1.5rem;
+        padding: 1rem;
         backdrop-filter: blur(4px);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         margin-top: auto;
@@ -423,7 +453,7 @@
         border: 1px solid #4b5563;
         min-width: 200px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
+        /* margin-bottom: 2rem; */
     }
     .pitch-note {
         font-size: 3rem;
