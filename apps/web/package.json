@@ -18,6 +18,7 @@
 		"@sveltejs/kit": "^2.50.1",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tauri-apps/cli": "^2.9.6",
+		"@types/webmidi": "^2.1.0",
 		"svelte": "^5.48.2",
 		"svelte-check": "^4.3.5",
 		"typescript": "^5.9.3",

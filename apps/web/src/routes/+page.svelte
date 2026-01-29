@@ -6,6 +6,7 @@
     import { MicrophoneManager } from "$lib/audio/Microphone";
     import { PitchDetector } from "$lib/audio/PitchDetector";
     import { getPitchInfo } from "$lib/utils/music";
+    import { MidiManager } from "$lib/audio/Midi";
 
     let showLabels = $state(true);
     let transpose = $state(0);
@@ -20,6 +21,7 @@
     const micManager = new MicrophoneManager();
     const pitchDetector = new PitchDetector();
     let animationFrameId: number;
+    const midiManager = new MidiManager();
 
     let pitchInfo = $derived(
         detectedPitch ? getPitchInfo(detectedPitch) : null,
@@ -112,6 +114,7 @@
 
     onMount(async () => {
         try {
+            midiManager.init(); // Init MIDI
             const savedMap = await settingsDB.loadKeyMap();
             if (savedMap) {
                 keyMap = savedMap;
@@ -268,6 +271,32 @@
         </div>
     </div>
 
+    {#if micEnabled}
+        <div class="fixed-pitch-display">
+            <div class="pitch-note">{pitchInfo?.note ?? "--"}</div>
+            <div class="pitch-cents">
+                <div class="cents-value">
+                    {pitchInfo
+                        ? (pitchInfo.cents > 0 ? "+" : "") + pitchInfo.cents
+                        : "--"} cents
+                </div>
+                <div class="cents-meter">
+                    <div class="meter-center"></div>
+                    {#if pitchInfo}
+                        <div
+                            class="meter-pointer"
+                            style="left: {50 + pitchInfo.cents}%"
+                        ></div>
+                    {/if}
+                </div>
+                <div class="meter-labels">
+                    <span>-50</span>
+                    <span>0</span>
+                    <span>+50</span>
+                </div>
+            </div>
+        </div>
+    {/if}
     <div class="piano-wrapper">
         <Keyboard
             {rangeStart}
@@ -278,29 +307,6 @@
             {detectedPitch}
         />
     </div>
-
-    {#if micEnabled && pitchInfo}
-        <div class="fixed-pitch-display">
-            <div class="pitch-note">{pitchInfo.note}</div>
-            <div class="pitch-cents">
-                <div class="cents-value">
-                    {pitchInfo?.cents > 0 ? "+" : ""}{pitchInfo.cents} cents
-                </div>
-                <div class="cents-meter">
-                    <div class="meter-center"></div>
-                    <div
-                        class="meter-pointer"
-                        style="left: {50 + pitchInfo.cents}%"
-                    ></div>
-                </div>
-                <div class="meter-labels">
-                    <span>-50</span>
-                    <span>0</span>
-                    <span>+50</span>
-                </div>
-            </div>
-        </div>
-    {/if}
 </div>
 
 <style>
@@ -308,10 +314,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         width: 100%;
         height: 100%;
-        padding: 1rem;
+        padding: 1rem 1rem 0 1rem;
         gap: 1.5rem;
         box-sizing: border-box;
     }
@@ -396,6 +402,8 @@
     }
 
     .piano-wrapper {
+        position: fixed;
+        bottom: 0;
         width: 100%;
         max-width: 72rem;
         background-color: rgba(17, 24, 39, 0.5);
@@ -404,19 +412,10 @@
         padding: 1.5rem;
         backdrop-filter: blur(4px);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-
-    .panic-btn {
-        padding: 0.5rem 1.5rem;
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #fecaca;
-        border: 1px solid rgba(239, 68, 68, 0.5);
-        border-radius: 0.5rem;
-        transition: background-color 0.2s;
-    }
-
-    .panic-btn:hover {
-        background-color: rgba(239, 68, 68, 0.4);
+        margin-top: auto;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: none;
     }
 
     .fixed-pitch-display {
