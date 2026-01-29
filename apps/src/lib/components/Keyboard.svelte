@@ -220,20 +220,13 @@
 
     async function handlePointerDown(e: PointerEvent) {
         if (isWaitingForAudio) return;
-
-        if (!isAudioEnabled) {
-            isWaitingForAudio = true;
-            // Clicked empty space often serves as "unmute" gesture too
-            await audioEngine.ensureRunning();
-            isAudioEnabled = true;
-            isWaitingForAudio = false;
-        }
-
         e.preventDefault();
+
         const keyboardEl = e.currentTarget as HTMLElement;
         const target = e.target as HTMLElement;
         const midi = getMidiFromElement(target);
 
+        // 1. Capture and visual feedback immediately (Synchronous)
         if (midi !== null) {
             try {
                 keyboardEl.setPointerCapture(e.pointerId);
@@ -244,6 +237,18 @@
 
             pointerNotes.set(e.pointerId, midi);
             addRef(midi);
+        }
+
+        // 2. Init audio properly if needed
+        if (!isAudioEnabled) {
+            isWaitingForAudio = true;
+            try {
+                // Clicked empty space often serves as "unmute" gesture too
+                await audioEngine.ensureRunning();
+                isAudioEnabled = true;
+            } finally {
+                isWaitingForAudio = false;
+            }
         }
     }
 
