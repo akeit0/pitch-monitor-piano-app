@@ -244,6 +244,15 @@
                 removeRef(midi);
                 pointerNotes.delete(e.pointerId);
             }
+        } else {
+            const el = document.elementFromPoint(
+                e.clientX,
+                e.clientY,
+            ) as HTMLElement;
+            const midi = getMidiFromElement(el);
+            if (midi) {
+                removeRef(midi);
+            }
         }
     }
 

@@ -795,6 +795,7 @@
         .controls-bar {
             flex: 1; /* Take available width */
             padding: 0.5rem;
+            max-width: 60%;
             gap: 1rem;
             overflow-y: auto; /* Allow scroll if controls overflow */
             max-height: 40%; /* Limit height */
