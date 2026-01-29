@@ -9,12 +9,13 @@
 
     let rangeStart = $state(48); // C3
     let rangeEnd = $state(72); // C5
-    let selectedPreset = $state("49");
+    let selectedPreset = $state("25");
 
     const presets = {
         "88": { start: 21, end: 108, name: "88 Keys (A0 - C8)" },
         "61": { start: 36, end: 96, name: "61 Keys (C2 - C7)" },
-        "49": { start: 48, end: 72, name: "49 Keys (C3 - C5)" },
+        "49": { start: 41, end: 91, name: "49 Keys (F2 - F6)" },
+        "25": { start: 48, end: 72, name: "25 Keys (C3 - C5)" },
     };
 
     function selectPreset() {
@@ -127,11 +128,6 @@
 </script>
 
 <div class="container">
-    <div class="header">
-        <h1>Svelte Piano</h1>
-        <p>WebAudioFont + SvelteKit + Tauri</p>
-    </div>
-
     <div class="controls-bar">
         <!-- Transpose Controls -->
         <div class="control-group">
@@ -160,6 +156,7 @@
                 <option value="88">88 Keys (Full)</option>
                 <option value="61">61 Keys</option>
                 <option value="49">49 Keys</option>
+                <option value="25">25 Keys</option>
                 <option value="custom">Custom</option>
             </select>
             {#if selectedPreset === "custom"}

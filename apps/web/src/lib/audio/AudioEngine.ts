@@ -1,5 +1,4 @@
-// @ts-ignore
-import WebAudioFontPlayer from './WebAudioFontPlayer.js';
+import WebAudioFontPlayer from './WebAudioFontPlayer';
 // @ts-ignore
 import pianoSoundFont from './piano.js';
 
