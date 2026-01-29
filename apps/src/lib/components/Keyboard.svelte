@@ -219,6 +219,8 @@
 
     async function handlePointerDown(e: PointerEvent) {
         e.preventDefault();
+        const keyboardEl = e.currentTarget as HTMLElement;
+
         // Init audio
         if (!isAudioEnabled) {
             await audioEngine.ensureRunning();
@@ -230,7 +232,7 @@
         if (midi !== null) {
             pointerNotes.set(e.pointerId, midi);
             addRef(midi);
-            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            keyboardEl.setPointerCapture(e.pointerId);
         }
     }
 
@@ -360,10 +362,12 @@
         position: relative;
         display: flex;
         width: 100%;
-        height: 16rem;
+        height: 100%; /* Flexible height */
+        max-height: 100%;
+        min-height: 100px;
+        bottom: 0px;
         background-color: #111827;
         border-radius: 0.5rem;
-        overflow: hidden;
         user-select: none;
         touch-action: none;
     }
@@ -424,7 +428,7 @@
 
     .black-key {
         position: absolute;
-        height: 10rem;
+        height: 60%; /* Percentage based */
         background-color: black;
         z-index: 10;
         border-bottom-left-radius: 0.25rem;

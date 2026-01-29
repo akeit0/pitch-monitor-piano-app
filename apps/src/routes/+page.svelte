@@ -164,6 +164,11 @@
                 selectedPreset = match;
             }
 
+            // Mobile check: Default showLabels to false on small screens
+            if (Math.min(window.innerWidth, window.innerHeight) <= 768) {
+                showLabels = false;
+            }
+
             settingsLoaded = true;
         } catch (e) {
             console.error("Failed to load settings", e);
@@ -677,16 +682,16 @@
 
     .piano-wrapper {
         width: 100%;
-        background-color: rgba(17, 24, 39, 0.5);
+        background-color: rgba(21, 30, 45, 0.5);
         border: 1px solid #1f2937;
         border-radius: 0.75rem;
         padding: 1rem;
         backdrop-filter: blur(4px);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         margin-top: auto;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
         border-bottom: none;
+        height: 16rem; /* Default height for portrait */
+        display: flex; /* Ensure inner keyboard expands */
     }
 
     .fixed-pitch-display {
@@ -766,13 +771,56 @@
         /* Match other select styles if needed, but they are generic 'select' */
     }
 
-    @media (max-width: 768px) {
+    /* Hide desktop controls on mobile (narrow width OR clear landscape phone height) */
+    @media (max-width: 768px), (max-height: 500px) {
         .desktop-only {
             display: none !important;
         }
-        /* Hide key labels on mobile, assuming Keyboard.svelte uses this class */
-        :global(.keyboard-labels) {
-            display: none !important;
+    }
+
+    /* Landscape Mode Tweaks for Phones/Tablets */
+    /* Also apply to Mobile Portrait because we force-rotate it to landscape */
+    @media (orientation: landscape) and (max-height: 500px),
+        (max-width: 768px) and (orientation: portrait) {
+        .container {
+            flex-direction: row; /* Horizontal layout */
+            flex-wrap: wrap; /* Allow wrapping */
+            align-items: flex-start; /* Align to top */
+            padding: 0.5rem;
+            gap: 0.5rem;
+            height: 100%; /* Full viewport height */
+            overflow: hidden; /* Prevent body scroll if possible */
+        }
+
+        .controls-bar {
+            flex: 1; /* Take available width */
+            padding: 0.5rem;
+            gap: 1rem;
+            overflow-y: auto; /* Allow scroll if controls overflow */
+            max-height: 40%; /* Limit height */
+        }
+
+        .fixed-pitch-display {
+            min-width: 120px;
+            padding: 0.5rem;
+            /* Move next to controls if possible, effectively flex-item */
+            margin-bottom: 0;
+            order: 2; /* Ensure order */
+            flex: 0 0 auto;
+        }
+
+        .controls-bar {
+            order: 1;
+        }
+
+        .piano-wrapper {
+            height: 50%;
+
+            order: 3;
+        }
+
+        .pitch-note {
+            font-size: 1.5rem;
         }
     }
 </style>
