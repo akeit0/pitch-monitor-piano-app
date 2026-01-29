@@ -67,6 +67,16 @@ npm run dev
 npm run tauri dev
 ```
 
+**GitHub Pages 用ビルド:**
+PowerShell:
+```bash
+$env:OUT_DIR = '../docs'; $env:BASE_PATH = '/piano-app'; npm run build
+```
+Bash:
+```bash
+OUT_DIR=../docs BASE_PATH=/piano-app npm run build
+```
+
 ## ライセンス
 
 MIT
