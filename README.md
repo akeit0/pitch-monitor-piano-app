@@ -6,7 +6,7 @@ A modern, feature-rich virtual piano application built with **Svelte 5** and **T
 
 [Demo](https://akeit0.github.io/piano-app/)
 
-![Piano App Icon](src/lib/assets/piano.svg)
+![Piano App Icon](apps/src/lib/assets/piano.svg)
 
 ## Features
 

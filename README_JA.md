@@ -6,7 +6,7 @@
 
 [Demo](https://akeit0.github.io/piano-app/)
 
-![Piano App Icon](src/lib/assets/piano.svg)
+![Piano App Icon](apps/src/lib/assets/piano.svg)
 
 ## 主な機能
 
