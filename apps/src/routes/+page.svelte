@@ -417,7 +417,7 @@
             </button>
         </div>
         <!-- MIDI Controls -->
-        <div class="control-group">
+        <div class="control-group desktop-only">
             <label for="midi-toggle">MIDI Input</label>
             <div class="midi-controls">
                 <button
@@ -493,7 +493,7 @@
             </div>
         </div>
         <!-- Key Map Controls -->
-        <div class="control-group">
+        <div class="control-group desktop-only">
             <label for="key-map">Key Map</label>
             <div class="buttons">
                 <button onclick={exportKeyMap}>Export</button>
@@ -764,5 +764,11 @@
     .midi-select {
         max-width: 12rem;
         /* Match other select styles if needed, but they are generic 'select' */
+    }
+
+    @media (max-width: 768px) {
+        :global(.desktop-only) {
+            display: none !important;
+        }
     }
 </style>
