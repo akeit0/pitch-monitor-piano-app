@@ -1,0 +1,50 @@
+
+> web@0.0.1 build
+> vite build
+
+You are using Node.js 22.9.0. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+[36mvite v7.3.1 [32mbuilding ssr environment for production...[36m[39m
+transforming...
+9:52:36 [vite-plugin-svelte] src/lib/components/Keyboard.svelte:249:0 `<div>` with a pointerdown, pointermove, pointerup, pointercancel or contextmenu handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+247: <svelte:window onkeydown={handleKeyDown} onkeyup={handleKeyUp} />
+248: 
+249: <div
+          ^
+250:     class="relative flex w-full h-80 bg-gray-900 rounded-lg overflow-hidden select-none"
+251:     onpointerdown={handlePointerDown}
+[32m笨・[39m 195 modules transformed.
+rendering chunks...
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+9:52:38 [vite-plugin-svelte] src/lib/components/Keyboard.svelte:249:0 `<div>` with a pointerdown, pointermove, pointerup, pointercancel or contextmenu handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+247: <svelte:window onkeydown={handleKeyDown} onkeyup={handleKeyUp} />
+248: 
+249: <div
+          ^
+250:     class="relative flex w-full h-80 bg-gray-900 rounded-lg overflow-hidden select-none"
+251:     onpointerdown={handlePointerDown}
+[32m笨・[39m 157 modules transformed.
+笨・[39m Build failed in 302ms
+笨・[39m Build failed in 1.60s
+error during build:
+[vite-plugin-sveltekit-compile] src/lib/audio/AudioEngine.ts (1:7): "default" is not exported by "node_modules/webaudiofont/npm/dist/WebAudioFontPlayer.js", imported by "src/lib/audio/AudioEngine.ts".
+file: C:/Users/akito/AntigravityProjects/piano-app/apps/web/src/lib/audio/AudioEngine.ts:1:7
+
+1: import WebAudioFontPlayer from 'webaudiofont';
+          ^
+2: // @ts-ignore
+3: import pianoSoundFont from './piano.js';
+
+    at getRollupError (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at Module.error (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:17037:16)
+    at Module.traceVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:17449:29)
+    at ModuleScope.findVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:15067:39)
+    at ChildScope.findVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at ClassBodyScope.findVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at ChildScope.findVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at ChildScope.findVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at FunctionScope.findVariable (file:///C:/Users/akito/AntigravityProjects/piano-app/apps/web/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+
