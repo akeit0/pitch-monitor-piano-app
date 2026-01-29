@@ -958,29 +958,29 @@ var WebAudioFontPlayer = /** @class */ (function () {
         if (zoneahdsr) {
             if (!(zoneahdsr.length > 0)) {
                 zoneahdsr = [{
-                        duration: 0,
-                        volume: 1
-                    }, {
-                        duration: 0.5,
-                        volume: 1
-                    }, {
-                        duration: 1.5,
-                        volume: 0.5
-                    }, {
-                        duration: 3,
-                        volume: 0
-                    }
+                    duration: 0,
+                    volume: 1
+                }, {
+                    duration: 0.5,
+                    volume: 1
+                }, {
+                    duration: 1.5,
+                    volume: 0.5
+                }, {
+                    duration: 3,
+                    volume: 0
+                }
                 ];
             }
         }
         else {
             zoneahdsr = [{
-                    duration: 0,
-                    volume: 1
-                }, {
-                    duration: duration,
-                    volume: 1
-                }
+                duration: 0,
+                volume: 1
+            }, {
+                duration: duration,
+                volume: 1
+            }
             ];
         }
         var ahdsr = zoneahdsr;

@@ -3,25 +3,29 @@
 
     // Props
     let {
-        startOctave = 3,
-        octaves = 2,
+        rangeStart = 48, // C3
+        rangeEnd = 72, // C5
         showLabels = false,
         keyMap = {} as Record<string, number>,
+        transpose = 0,
     } = $props();
 
     // State
     let activeNotes = $state(new Set<number>());
     let isAudioEnabled = $state(false);
 
-    // Derived state
-    let startMidi = $derived(startOctave * 12 + 12 + 12);
+    // Derived: Reverse map for display: midi -> list of keys (labels)
+    // We want the label to guide the user on WHICH KEY converts to the sound.
+    // If I map 'A' to offset 0 (C3), and I press 'A', I hear C3.
+    // Transpose does not affect the physical mapping key, but sound.
+    // User request: "C3, C4 label should change on transpose."
+    // This implies the NOTE NAME label on the key should reflect the transposed sound.
 
-    // Derived: Reverse map for display: midi -> list of keys
     let midiToKeyLabels = $derived.by(() => {
         const map = new Map<number, string[]>();
         if (!showLabels) return map;
 
-        const base = generateKeys(startOctave, octaves).whites[0].midi;
+        const base = MAPPING_BASE_MIDI;
 
         for (const [key, offset] of Object.entries(keyMap)) {
             const midi = base + offset;
@@ -32,51 +36,80 @@
         return map;
     });
 
-    // We want to generate keys based on octaves.
-    function generateKeys(startOpt: number, count: number) {
-        const startMidiVal = startOpt * 12 + 24;
-        const base = startOpt * 12 + 12;
+    // Helper for black key offsets within an octave (relative to C)
+    const blackKeyOffsets = {
+        1: 0.55, // C#
+        3: 1.65, // D#
+        6: 3.55, // F#
+        8: 4.6, // G#
+        10: 5.65, // A#
+    };
 
+    const MAPPING_BASE_MIDI = 57; // A4 is the center for key mapping
+
+    function getNoteName(midi: number) {
+        const notes = [
+            "C",
+            "C#",
+            "D",
+            "D#",
+            "E",
+            "F",
+            "F#",
+            "G",
+            "G#",
+            "A",
+            "A#",
+            "B",
+        ];
+        const octave = Math.floor(midi / 12) - 1;
+        const note = notes[midi % 12];
+        return `${note}${octave}`;
+    }
+
+    function generateKeys(start: number, end: number) {
         const whites = [];
         const blacks = [];
+        let whiteCount = 0;
 
-        let whiteIndex = 0;
+        // Calculate absolute white key index for reference (C-1 = 0)
+        // This is purely for calculating relative width positions
+        const getAbsWhiteIndex = (m: number) => {
+            const octave = Math.floor(m / 12);
+            const note = m % 12; // 0..11
+            const whiteOffsets = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+            return octave * 7 + whiteOffsets[note];
+        };
 
-        // Total keys = octaves * 12 + 1 (end with C)
-        const totalKeys = count * 12 + 1;
+        const startWhiteIndex = getAbsWhiteIndex(start);
 
-        for (let i = 0; i < totalKeys; i++) {
-            const midi = base + i;
+        for (let i = start; i <= end; i++) {
+            const octave = Math.floor(i / 12);
             const noteInOctave = i % 12;
-            // 0 2 4 5 7 9 11 are white (C D E F G A B)
             const isBlack = [1, 3, 6, 8, 10].includes(noteInOctave);
 
             if (!isBlack) {
-                whites.push({ midi, index: whiteIndex++ });
+                whites.push({ midi: i, index: whiteCount++ });
             } else {
-                const octavePosition = Math.floor(i / 12);
-                const noteType = noteInOctave;
-                let offset = 0;
+                // Calculate position based on OCTAVE start.
+                // The offsets in blackKeyOffsets are relative to the start of the octave (C).
+                // Absolute position in "white key units" = (octave * 7) + offset.
+                // We subtract startWhiteIndex to get position relative to the start of the visible board.
 
-                if (noteType === 1)
-                    offset = 0.55; // C#
-                else if (noteType === 3)
-                    offset = 1.65; // D#
-                else if (noteType === 6)
-                    offset = 3.55; // F#
-                else if (noteType === 8)
-                    offset = 4.6; // G#
-                else if (noteType === 10) offset = 5.65; // A#
+                const offset =
+                    blackKeyOffsets[
+                        noteInOctave as keyof typeof blackKeyOffsets
+                    ];
+                const absPos = octave * 7 + offset;
+                const relPos = absPos - startWhiteIndex;
 
-                const pos = octavePosition * 7 + offset;
-
-                blacks.push({ midi, pos });
+                blacks.push({ midi: i, pos: relPos });
             }
         }
-        return { whites, blacks, numWhites: whiteIndex };
+        return { whites, blacks, numWhites: whiteCount };
     }
 
-    let keys = $derived(generateKeys(startOctave, octaves));
+    let keys = $derived(generateKeys(rangeStart, rangeEnd));
 
     // Pointer Management
     let pointerNotes = new Map<number, number>(); // pointerId -> midi
@@ -180,8 +213,12 @@
         if (e.repeat) return;
         const offset = keyMap[e.key.toLowerCase()];
         if (offset !== undefined) {
-            const base = generateKeys(startOctave, octaves).whites[0].midi;
-            const targetMidi = base + offset;
+            // For key map, we need a consistent base.
+            // We chose keys.whites[0].midi as base in the derived loop.
+            // Let's rely on consistent logic.
+            // const base =
+            //     keys.whites.length > 0 ? keys.whites[0].midi : rangeStart; // Old base
+            const targetMidi = MAPPING_BASE_MIDI + offset;
             addRef(targetMidi);
         }
     }
@@ -189,8 +226,9 @@
     function handleKeyUp(e: KeyboardEvent) {
         const offset = keyMap[e.key.toLowerCase()];
         if (offset !== undefined) {
-            const base = generateKeys(startOctave, octaves).whites[0].midi;
-            const targetMidi = base + offset;
+            // const base =
+            //     keys.whites.length > 0 ? keys.whites[0].midi : rangeStart; // Old base
+            const targetMidi = MAPPING_BASE_MIDI + offset;
             removeRef(targetMidi);
         }
     }
@@ -219,8 +257,8 @@
             data-note={key.midi}
         >
             <div class="note-label">
-                {key.midi % 12 === 0
-                    ? "C" + (Math.floor(key.midi / 12) - 1)
+                {key.midi % 12 === 0 // Show C labels
+                    ? getNoteName(key.midi + transpose)
                     : ""}
             </div>
             {#if showLabels && midiToKeyLabels.has(key.midi)}

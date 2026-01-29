@@ -7,20 +7,47 @@
     let showLabels = $state(false);
     let transpose = $state(0);
 
+    let rangeStart = $state(48); // C3
+    let rangeEnd = $state(72); // C5
+    let selectedPreset = $state("49");
+
+    const presets = {
+        "88": { start: 21, end: 108, name: "88 Keys (A0 - C8)" },
+        "61": { start: 36, end: 96, name: "61 Keys (C2 - C7)" },
+        "49": { start: 48, end: 72, name: "49 Keys (C3 - C5)" },
+    };
+
+    function selectPreset() {
+        if (presets[selectedPreset as keyof typeof presets]) {
+            const p = presets[selectedPreset as keyof typeof presets];
+            rangeStart = p.start;
+            rangeEnd = p.end;
+        }
+    }
+
     const defaultKeyMap = {
-        a: 0,
-        w: 1,
-        s: 2,
-        e: 3,
-        d: 4,
-        f: 5,
-        t: 6,
-        g: 7,
-        y: 8,
-        h: 9,
-        u: 10,
-        j: 11,
-        k: 12,
+        z: -9,
+        x: -7,
+        c: -5,
+        v: -4,
+        b: -2,
+        n: 0,
+        m: 2,
+        a: 3,
+        w: 4,
+        s: 5,
+        e: 6,
+        d: 7,
+        f: 8,
+        t: 9,
+        g: 10,
+        y: 11,
+        h: 12,
+        u: 13,
+        j: 14,
+        k: 15,
+        o: 16,
+        l: 17,
     };
 
     let keyMap = $state({ ...defaultKeyMap });
@@ -36,14 +63,15 @@
         }
     });
 
-    function handleTransposeChange(delta: number) {
-        transpose += delta;
+    function handleTransposeChange(val: number) {
+        transpose = val;
         audioEngine.setTranspose(transpose);
     }
 
-    async function saveKeyMap() {
-        await settingsDB.saveKeyMap(JSON.parse(JSON.stringify(keyMap)));
-        alert("Key configuration saved!");
+    async function saveKeyMap(map: Record<string, number>) {
+        await settingsDB.saveKeyMap(JSON.parse(JSON.stringify(map)));
+        keyMap = map;
+        // alert("Key configuration saved!"); // Auto-save silent
     }
 
     function exportKeyMap() {
@@ -84,17 +112,17 @@
             });
 
             if (Object.keys(newMap).length > 0) {
-                keyMap = newMap;
-                alert("Key map imported!");
+                saveKeyMap(newMap);
+                alert("Key map imported and saved!");
             } else {
-                alert("Invalid file format. Expected 'key:offset' per line.");
+                alert("Invalid file format.");
             }
         };
         reader.readAsText(file);
     }
 
     function resetKeyMap() {
-        keyMap = { ...defaultKeyMap };
+        saveKeyMap({ ...defaultKeyMap });
     }
 </script>
 
@@ -107,11 +135,49 @@
     <div class="controls-bar">
         <!-- Transpose Controls -->
         <div class="control-group">
-            <label>Transpose: {transpose > 0 ? "+" : ""}{transpose}</label>
-            <div class="buttons">
-                <button onclick={() => handleTransposeChange(-1)}>-</button>
-                <button onclick={() => handleTransposeChange(1)}>+</button>
+            <label>Transpose</label>
+            <div class="transpose-controls">
+                <select
+                    value={transpose}
+                    onchange={(e) =>
+                        handleTransposeChange(parseInt(e.currentTarget.value))}
+                >
+                    {#each Array.from({ length: 25 }, (_, i) => i - 12) as t}
+                        <option value={t}>{t > 0 ? "+" : ""}{t}</option>
+                    {/each}
+                </select>
+                <button
+                    onclick={() => handleTransposeChange(0)}
+                    title="Reset Transpose">Reset</button
+                >
             </div>
+        </div>
+
+        <!-- Range Controls -->
+        <div class="control-group">
+            <label>Keyboard Size</label>
+            <select bind:value={selectedPreset} onchange={selectPreset}>
+                <option value="88">88 Keys (Full)</option>
+                <option value="61">61 Keys</option>
+                <option value="49">49 Keys</option>
+                <option value="custom">Custom</option>
+            </select>
+            {#if selectedPreset === "custom"}
+                <div class="custom-range">
+                    <label
+                        >Start: <input
+                            type="number"
+                            bind:value={rangeStart}
+                        /></label
+                    >
+                    <label
+                        >End: <input
+                            type="number"
+                            bind:value={rangeEnd}
+                        /></label
+                    >
+                </div>
+            {/if}
         </div>
 
         <!-- Display Options -->
@@ -124,13 +190,12 @@
 
         <!-- Key Map Controls -->
         <div class="control-group">
-            <label>Key Map (TXT)</label>
+            <label>Key Map</label>
             <div class="buttons">
-                <button onclick={saveKeyMap}>Save to DB</button>
-                <button onclick={exportKeyMap}>Export TXT</button>
-                <button onclick={resetKeyMap}>Reset</button>
+                <button onclick={exportKeyMap}>Export</button>
+                <button onclick={resetKeyMap}>Reset Default</button>
                 <label class="file-btn">
-                    Import TXT
+                    Import
                     <input
                         type="file"
                         accept=".txt"
@@ -143,7 +208,7 @@
     </div>
 
     <div class="piano-wrapper">
-        <Keyboard startOctave={3} octaves={2} {showLabels} {keyMap} />
+        <Keyboard {rangeStart} {rangeEnd} {showLabels} {keyMap} {transpose} />
     </div>
 
     <button class="panic-btn" onclick={() => audioEngine.panic()}>
@@ -225,6 +290,36 @@
         text-decoration: none;
         display: inline-flex;
         align-items: center;
+    }
+
+    .transpose-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .custom-range {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        justify-content: center;
+    }
+
+    .custom-range input {
+        width: 4rem;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        border: 1px solid #4b5563;
+        background-color: #374151;
+        color: white;
+    }
+
+    select {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid #4b5563;
+        background-color: #374151;
+        color: white;
     }
 
     button:hover,
