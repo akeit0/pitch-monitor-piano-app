@@ -405,7 +405,6 @@
         position: fixed;
         bottom: 0;
         width: 100%;
-        max-width: 72rem;
         background-color: rgba(17, 24, 39, 0.5);
         border: 1px solid #1f2937;
         border-radius: 0.75rem;
