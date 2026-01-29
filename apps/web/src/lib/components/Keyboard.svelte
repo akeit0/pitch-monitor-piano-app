@@ -349,11 +349,9 @@
             </div>
         </div>
     {/if}
-</div>
 
-<div class="hint">
     {#if !isAudioEnabled}
-        Tap to Start Audio
+        <div class="hint">Tap to Start Audio</div>
     {/if}
 </div>
 
@@ -443,11 +441,16 @@
 
     .hint {
         position: absolute;
-        top: 1rem;
-        left: 1rem;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         color: white;
-        opacity: 0.5;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
         pointer-events: none;
+        z-index: 50;
+        font-size: 1.2rem;
     }
     .key-map-label {
         position: absolute;
