@@ -10,4 +10,10 @@ declare global {
 	}
 }
 
-export {};
+export { };
+
+declare module "*.svg" {
+	const content: string;
+	export default content;
+}
+

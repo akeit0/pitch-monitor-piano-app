@@ -1,9 +1,13 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { audioEngine } from "$lib/audio/AudioEngine";
 
     // Props
-    let { startOctave = 3, octaves = 2 } = $props();
+    let {
+        startOctave = 3,
+        octaves = 2,
+        showLabels = false,
+        keyMap = {} as Record<string, number>,
+    } = $props();
 
     // State
     let activeNotes = $state(new Set<number>());
@@ -11,6 +15,22 @@
 
     // Derived state
     let startMidi = $derived(startOctave * 12 + 12 + 12);
+
+    // Derived: Reverse map for display: midi -> list of keys
+    let midiToKeyLabels = $derived.by(() => {
+        const map = new Map<number, string[]>();
+        if (!showLabels) return map;
+
+        const base = generateKeys(startOctave, octaves).whites[0].midi;
+
+        for (const [key, offset] of Object.entries(keyMap)) {
+            const midi = base + offset;
+            const labels = map.get(midi) || [];
+            labels.push(key.toUpperCase());
+            map.set(midi, labels);
+        }
+        return map;
+    });
 
     // We want to generate keys based on octaves.
     function generateKeys(startOpt: number, count: number) {
@@ -156,22 +176,6 @@
         return null;
     }
 
-    const keyMap: Record<string, number> = {
-        a: 0,
-        w: 1,
-        s: 2,
-        e: 3,
-        d: 4,
-        f: 5,
-        t: 6,
-        g: 7,
-        y: 8,
-        h: 9,
-        u: 10,
-        j: 11,
-        k: 12,
-    };
-
     function handleKeyDown(e: KeyboardEvent) {
         if (e.repeat) return;
         const offset = keyMap[e.key.toLowerCase()];
@@ -219,6 +223,11 @@
                     ? "C" + (Math.floor(key.midi / 12) - 1)
                     : ""}
             </div>
+            {#if showLabels && midiToKeyLabels.has(key.midi)}
+                <div class="key-map-label">
+                    {midiToKeyLabels.get(key.midi)?.join(", ")}
+                </div>
+            {/if}
         </div>
     {/each}
 
@@ -230,7 +239,13 @@
             style="width: {80 / keys.numWhites}%; left: {key.pos *
                 (100 / keys.numWhites)}%;"
             data-note={key.midi}
-        ></div>
+        >
+            {#if showLabels && midiToKeyLabels.has(key.midi)}
+                <div class="key-map-label-black">
+                    {midiToKeyLabels.get(key.midi)?.join(", ")}
+                </div>
+            {/if}
+        </div>
     {/each}
 </div>
 
@@ -302,6 +317,29 @@
         left: 1rem;
         color: white;
         opacity: 0.5;
+        pointer-events: none;
+    }
+    .key-map-label {
+        position: absolute;
+        bottom: 2rem;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #3b82f6; /* blue-500 */
+        pointer-events: none;
+    }
+
+    .key-map-label-black {
+        position: absolute;
+        bottom: 1rem;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: #93c5fd; /* blue-300 */
         pointer-events: none;
     }
 </style>

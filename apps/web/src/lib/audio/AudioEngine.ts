@@ -95,20 +95,22 @@ export class AudioEngine {
         }
     }
 
+    transpose: number = 0;
+
+    setTranspose(semitones: number) {
+        this.transpose = semitones;
+    }
+
     noteOn(pitch: number, velocity: number = 100) {
         if (!this.context || !this.masterGain || !this.player || !this.instrument) return;
 
+        const actualPitch = pitch + this.transpose;
+
         // Stop existing note of same pitch
-        this.noteOff(pitch);
+        this.noteOff(pitch); // We use original pitch for tracking active envelopes logic relative to keys
 
         const when = this.context.currentTime;
         const volume = Math.max(0, Math.min(1, velocity / 127));
-
-        // Debug: check if we have a zone for this pitch
-        // WebAudioFont's queueWaveTable finds the zone match internally.
-        // We can check if *any* buffer is missing.
-        // Or if the specific zone is missing.
-        // But for performance we skip excessive checks unless debugging.
 
         try {
             const envelope = this.player.queueWaveTable(
@@ -116,13 +118,13 @@ export class AudioEngine {
                 this.masterGain,
                 this.instrument,
                 when,
-                pitch,
+                actualPitch,
                 999,
                 volume
             );
             this.activeEnvelopes.set(pitch, envelope);
         } catch (e) {
-            console.error(`AudioEngine: noteOn error for pitch ${pitch}`, e);
+            console.error(`AudioEngine: noteOn error for pitch ${actualPitch}`, e);
         }
     }
 
