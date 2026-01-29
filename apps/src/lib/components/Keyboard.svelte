@@ -314,7 +314,7 @@
                     : ""}
             </div>
             {#if showLabels && midiToKeyLabels.has(key.midi)}
-                <div class="key-map-label">
+                <div class="key-map-label keyboard-labels">
                     {midiToKeyLabels.get(key.midi)?.join(" ")}
                 </div>
             {/if}
@@ -331,7 +331,7 @@
             data-note={key.midi}
         >
             {#if showLabels && midiToKeyLabels.has(key.midi)}
-                <div class="key-map-label-black">
+                <div class="key-map-label-black keyboard-labels">
                     {midiToKeyLabels.get(key.midi)?.join(", ")}
                 </div>
             {/if}

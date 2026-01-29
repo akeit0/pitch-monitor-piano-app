@@ -767,7 +767,11 @@
     }
 
     @media (max-width: 768px) {
-        :global(.desktop-only) {
+        .desktop-only {
+            display: none !important;
+        }
+        /* Hide key labels on mobile, assuming Keyboard.svelte uses this class */
+        :global(.keyboard-labels) {
             display: none !important;
         }
     }
