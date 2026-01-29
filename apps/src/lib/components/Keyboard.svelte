@@ -57,6 +57,7 @@
     // State
     let activeNotes = $state(new Set<number>());
     let isAudioEnabled = $state(false);
+    let isWaitingForAudio = false;
 
     // Derived: Reverse map for display: midi -> list of keys (labels)
     // We want the label to guide the user on WHICH KEY converts to the sound.
@@ -218,6 +219,16 @@
     }
 
     async function handlePointerDown(e: PointerEvent) {
+        if (isWaitingForAudio) return;
+
+        if (!isAudioEnabled) {
+            isWaitingForAudio = true;
+            // Clicked empty space often serves as "unmute" gesture too
+            await audioEngine.ensureRunning();
+            isAudioEnabled = true;
+            isWaitingForAudio = false;
+        }
+
         e.preventDefault();
         const keyboardEl = e.currentTarget as HTMLElement;
         const target = e.target as HTMLElement;
@@ -233,16 +244,6 @@
 
             pointerNotes.set(e.pointerId, midi);
             addRef(midi);
-
-            // Init audio after visual feedback
-            if (!isAudioEnabled) {
-                await audioEngine.ensureRunning();
-                isAudioEnabled = true;
-            }
-        } else if (!isAudioEnabled) {
-            // Clicked empty space often serves as "unmute" gesture too
-            await audioEngine.ensureRunning();
-            isAudioEnabled = true;
         }
     }
 
@@ -275,6 +276,7 @@
     }
 
     function handleKeyDown(e: KeyboardEvent) {
+        if (isWaitingForAudio) return;
         if (e.repeat) return;
         const offset = keyMap[e.key.toLowerCase()];
         if (offset !== undefined) {
@@ -289,6 +291,7 @@
     }
 
     function handleKeyUp(e: KeyboardEvent) {
+        if (isWaitingForAudio) return;
         const offset = keyMap[e.key.toLowerCase()];
         if (offset !== undefined) {
             // const base =
