@@ -2,6 +2,10 @@
 
 **Svelte 5** と **Tauri** で構築された、モダンで多機能なバーチャルピアノアプリケーションです。ミュージシャンや趣味でピアノを弾く方のために設計されており、レスポンシブな演奏体験、MIDIサポート、そして内蔵のピッチ検出ツールを提供します。
 
+[English version](README.md)
+
+[Demo](https://akeit0.github.io/piano-app/)
+
 ![Piano App Icon](src/lib/assets/piano.svg)
 
 ## 主な機能

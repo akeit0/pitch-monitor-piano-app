@@ -2,6 +2,10 @@
 
 A modern, feature-rich virtual piano application built with **Svelte 5** and **Tauri**. Designed for musicians and hobbyists, this app offers a responsive playing experience, MIDI support, and built-in pitch detection tools.
 
+[日本語版 ](README_JA.md)
+
+[Demo](https://akeit0.github.io/piano-app/)
+
 ![Piano App Icon](src/lib/assets/piano.svg)
 
 ## Features
