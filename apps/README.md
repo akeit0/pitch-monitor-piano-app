@@ -1,42 +1,72 @@
-# sv
+# Piano App
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A modern, feature-rich virtual piano application built with **Svelte 5** and **Tauri**. Designed for musicians and hobbyists, this app offers a responsive playing experience, MIDI support, and built-in pitch detection tools.
 
-## Creating a project
+![Piano App Icon](src/lib/assets/piano.svg)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Features
 
-```sh
-# create a new project
-npx sv create my-app
-```
+### 🎹 Virtual Piano
+- **Responsive Keyboard**: Smooth, interactive keys that react to mouse clicks and touch.
+- **Computer Keyboard Support**: Play the piano using your PC keyboard.
+- **Audio Engine**: High-quality sound synthesis using `webaudiofont`.
 
-To recreate this project with the same configuration:
+### 🎛️ Advanced Controls
+- **Adjustable Range**: Choose from standard presets (88, 61, 49, 42, 26 keys) or define a custom key range.
+- **Transpose**: Shift pitch up or down by semitones (-12 to +12).
+- **Auto-Save**: innovative system that automatically saves your **transpose settings**, **keyboard range**, and **key mappings** so you pick up right where you left off.
 
-```sh
-# recreate this project
-npx sv create --template minimal --types ts --no-install apps/web
-```
+### 🔌 MIDI Integration
+- **Plug & Play**: Automatically detects connected MIDI devices.
+- **Input Selection**: Choose specifically which MIDI device to use from the interface.
 
-## Developing
+### 🎤 Pitch Detection (Tuner)
+- **Real-time Analysis**: visualizes the pitch detected from your microphone.
+- **Cents Meter**: Precision tuning display showing notes and cent deviation (flat/sharp).
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### ⌨️ Key Mapping & Customization
+- **Custom Key Map**: Remap any computer key to any piano note.
+- **Import/Export**: Save your custom key layouts to text files and share them or load them later.
+- **Default Presets**: Quickly reset to the optimized default layout.
 
-```sh
+## Tech Stack
+
+- **Frontend**: Svelte 5, TypeScript, Vite
+- **Desktop Framework**: Tauri 2 (Rust)
+- **Audio**: Web Audio API
+- **Storage**: IndexedDB (via persistent browser storage)
+
+## Getting Started
+
+### Prerequisites
+- Node.js installed
+- Rust/Cargo installed (for Tauri desktop app)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd piano-app/apps
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Running the App
+
+**For Web (Browser):**
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
+**For Desktop (Tauri):**
+```bash
+npm run tauri dev
 ```
 
-You can preview the production build with `npm run preview`.
+## License
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+MIT
