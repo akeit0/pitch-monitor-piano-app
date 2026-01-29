@@ -5,6 +5,7 @@
     import { settingsDB } from "$lib/utils/db";
     import { MicrophoneManager } from "$lib/audio/Microphone";
     import { PitchDetector } from "$lib/audio/PitchDetector";
+    import { getPitchInfo } from "$lib/utils/music";
 
     let showLabels = $state(true);
     let transpose = $state(0);
@@ -19,6 +20,10 @@
     const micManager = new MicrophoneManager();
     const pitchDetector = new PitchDetector();
     let animationFrameId: number;
+
+    let pitchInfo = $derived(
+        detectedPitch ? getPitchInfo(detectedPitch) : null,
+    );
 
     function detectPitchLoop() {
         if (!micEnabled) return;
@@ -274,9 +279,28 @@
         />
     </div>
 
-    <button class="panic-btn" onclick={() => audioEngine.panic()}>
-        Panic (Stop All Sounds)
-    </button>
+    {#if micEnabled && pitchInfo}
+        <div class="fixed-pitch-display">
+            <div class="pitch-note">{pitchInfo.note}</div>
+            <div class="pitch-cents">
+                <div class="cents-value">
+                    {pitchInfo?.cents > 0 ? "+" : ""}{pitchInfo.cents} cents
+                </div>
+                <div class="cents-meter">
+                    <div class="meter-center"></div>
+                    <div
+                        class="meter-pointer"
+                        style="left: {50 + pitchInfo.cents}%"
+                    ></div>
+                </div>
+                <div class="meter-labels">
+                    <span>-50</span>
+                    <span>0</span>
+                    <span>+50</span>
+                </div>
+            </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -393,5 +417,71 @@
 
     .panic-btn:hover {
         background-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .fixed-pitch-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: rgba(31, 41, 55, 0.8);
+        padding: 1rem 2rem;
+        border-radius: 1rem;
+        border: 1px solid #4b5563;
+        min-width: 200px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    .pitch-note {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #60a5fa; /* blue-400 */
+        line-height: 1;
+    }
+    .pitch-cents {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    .cents-value {
+        color: #9ca3af;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+    .cents-meter {
+        width: 100%;
+        height: 8px; /* Slightly thicker */
+        background-color: #374151;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+    }
+    .meter-center {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #9ca3af;
+        transform: translateX(-50%);
+    }
+    .meter-pointer {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background-color: #ef4444; /* red-500 */
+        border-radius: 3px;
+        transform: translateX(-50%);
+        transition: left 0.1s linear;
+    }
+    .meter-labels {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
     }
 </style>
