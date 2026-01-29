@@ -3,37 +3,69 @@ import { audioEngine } from "./AudioEngine";
 export class MidiManager {
     midiAccess: WebMidi.MIDIAccess | null = null;
     currentInput: WebMidi.MIDIInput | null = null;
+    onStateChange: ((inputs: WebMidi.MIDIInput[]) => void) | null = null;
+    currentInputId: string | null = null;
 
     constructor() {
         // Auto-initialize if possible
     }
 
-    async init() {
+    async init(onStateChange?: (inputs: WebMidi.MIDIInput[]) => void): Promise<{ success: boolean; error?: string }> {
+        if (onStateChange) this.onStateChange = onStateChange;
+
         if (navigator.requestMIDIAccess) {
             try {
                 this.midiAccess = await navigator.requestMIDIAccess();
-                this.setupInputs();
-                this.midiAccess.onstatechange = () => this.setupInputs();
-            } catch (e) {
+                this.notifyStateChange();
+                this.midiAccess.onstatechange = () => this.notifyStateChange();
+                return { success: true };
+            } catch (e: any) {
                 console.warn("WebMIDI not supported or denied", e);
+                return { success: false, error: e.message || String(e) };
             }
+        }
+        return { success: false, error: "WebMIDI API not supported in this environment." };
+    }
+
+    getInputs(): WebMidi.MIDIInput[] {
+        if (!this.midiAccess) return [];
+        return Array.from(this.midiAccess.inputs.values());
+    }
+
+    notifyStateChange() {
+        if (this.onStateChange) {
+            this.onStateChange(this.getInputs());
         }
     }
 
-    setupInputs() {
+    setInput(id: string) {
         if (!this.midiAccess) return;
-        const inputs = Array.from(this.midiAccess.inputs.values());
-        // Auto connect to first input for now
-        if (inputs.length > 0 && !this.currentInput) {
-            this.connectInput(inputs[0]);
+
+        // If selecting the same ID, do nothing (or re-connect?)
+        // If selecting empty string/null, disconnect
+        if (!id) {
+            this.disconnect();
+            return;
+        }
+
+        const input = this.midiAccess.inputs.get(id);
+        if (input) {
+            this.connectInput(input);
+        }
+    }
+
+    disconnect() {
+        if (this.currentInput) {
+            this.currentInput.onmidimessage = null;
+            this.currentInput = null;
+            this.currentInputId = null;
         }
     }
 
     connectInput(input: WebMidi.MIDIInput) {
-        if (this.currentInput) {
-            this.currentInput.onmidimessage = null;
-        }
+        this.disconnect(); // Disconnect previous
         this.currentInput = input;
+        this.currentInputId = input.id;
         this.currentInput.onmidimessage = this.handleMidiMessage.bind(this);
         console.log(`Connected to MIDI device: ${input.name}`);
     }

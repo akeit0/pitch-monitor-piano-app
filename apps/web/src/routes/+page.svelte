@@ -113,9 +113,14 @@
 
     let keyMap: Record<string, number> = $state({ ...defaultKeyMap });
 
+    // MIDI State
+    let midiEnabled = $state(false);
+    let midiInputs = $state([] as WebMidi.MIDIInput[]);
+    let selectedMidiId = $state("");
+
     onMount(async () => {
         try {
-            midiManager.init(); // Init MIDI
+            // midiManager.init(); // Init MIDI - Removed for manual activation
             const savedMap = await settingsDB.loadKeyMap();
             if (savedMap) {
                 keyMap = savedMap;
@@ -124,6 +129,56 @@
             console.error("Failed to load key map", e);
         }
     });
+
+    async function toggleMidi() {
+        if (!midiEnabled) {
+            const result = await midiManager.init((inputs) => {
+                midiInputs = inputs;
+                // If current selected device is gone, reset
+                if (
+                    selectedMidiId &&
+                    !inputs.find((i) => i.id === selectedMidiId)
+                ) {
+                    selectedMidiId = "";
+                    midiManager.setInput("");
+                }
+            });
+
+            if (result.success) {
+                midiEnabled = true;
+                midiInputs = midiManager.getInputs();
+                // Auto-select first if available and none selected
+                if (midiInputs.length > 0 && !selectedMidiId) {
+                    selectedMidiId = midiInputs[0].id;
+                    midiManager.setInput(selectedMidiId);
+                }
+            } else {
+                if (result.error && result.error.includes("Permission")) {
+                    alert(
+                        "MIDI Access Denied.\n\n" +
+                            "To fix this:\n" +
+                            "1. Click the Lock/Info icon in your browser address bar.\n" +
+                            "2. Find 'MIDI devices' and set to 'Allow' (or 'Reset permission').\n" +
+                            "3. Refresh the page.",
+                    );
+                } else {
+                    alert(`Could not access MIDI devices: ${result.error}`);
+                }
+            }
+        } else {
+            // Just disable/hide?
+            // Usually we just want to stop listening.
+            // But we can't really 'revoke' access easily without reload.
+            // We can just set flag to false and disconnect manager.
+            midiEnabled = false;
+            midiManager.disconnect();
+            selectedMidiId = "";
+        }
+    }
+
+    function handleMidiSelect() {
+        midiManager.setInput(selectedMidiId);
+    }
 
     function handleTransposeChange(val: number) {
         transpose = val;
@@ -267,6 +322,83 @@
                     >
                 </div>
             {/if}
+        </div>
+
+        <!-- MIDI Controls -->
+        <div class="control-group">
+            <label for="midi-toggle">MIDI Input</label>
+            <div class="midi-controls">
+                <button
+                    id="midi-toggle"
+                    class="mic-btn"
+                    class:active={midiEnabled}
+                    onclick={toggleMidi}
+                    title={midiEnabled ? "Disable MIDI" : "Enable MIDI"}
+                >
+                    <!-- Improved DIN-5 Icon -->
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <!-- Pins -->
+                        <circle
+                            cx="12"
+                            cy="16"
+                            r="1.5"
+                            fill="currentColor"
+                            stroke="none"
+                        ></circle>
+                        <circle
+                            cx="7"
+                            cy="14"
+                            r="1.5"
+                            fill="currentColor"
+                            stroke="none"
+                        ></circle>
+                        <circle
+                            cx="17"
+                            cy="14"
+                            r="1.5"
+                            fill="currentColor"
+                            stroke="none"
+                        ></circle>
+                        <circle
+                            cx="5"
+                            cy="10"
+                            r="1.5"
+                            fill="currentColor"
+                            stroke="none"
+                        ></circle>
+                        <circle
+                            cx="19"
+                            cy="10"
+                            r="1.5"
+                            fill="currentColor"
+                            stroke="none"
+                        ></circle>
+                    </svg>
+                </button>
+                {#if midiEnabled}
+                    <select
+                        bind:value={selectedMidiId}
+                        onchange={handleMidiSelect}
+                        class="midi-select"
+                    >
+                        <option value="">Select Device...</option>
+                        {#each midiInputs as input (input.id)}
+                            <option value={input.id}>{input.name}</option>
+                        {/each}
+                    </select>
+                {/if}
+            </div>
         </div>
 
         <!-- Display Options -->
@@ -576,5 +708,16 @@
         color: #6b7280;
         font-size: 0.75rem;
         margin-top: 0.25rem;
+    }
+
+    .midi-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .midi-select {
+        max-width: 12rem;
+        /* Match other select styles if needed, but they are generic 'select' */
     }
 </style>
