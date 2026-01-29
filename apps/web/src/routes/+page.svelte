@@ -11,9 +11,9 @@
     let showLabels = $state(true);
     let transpose = $state(0);
 
-    let rangeStart = $state(48); // C3
-    let rangeEnd = $state(72); // C5
-    let selectedPreset = $state("25");
+    let rangeStart = $state(41); // F2
+    let rangeEnd = $state(91); // F6
+    let selectedPreset = $state("49");
 
     // Microphone & Pitch
     let micEnabled = $state(false);
@@ -73,7 +73,8 @@
     const presets = {
         "88": { start: 21, end: 108, name: "88 Keys (A0 - C8)" },
         "61": { start: 36, end: 96, name: "61 Keys (C2 - C7)" },
-        "49": { start: 41, end: 91, name: "49 Keys (F2 - F6)" },
+        "49": { start: 41, end: 89, name: "49 Keys (F2 - F6)" },
+        "41": { start: 41, end: 80, name: "41 Keys (F2 - A5)" },
         "25": { start: 48, end: 72, name: "25 Keys (C3 - C5)" },
     };
 
@@ -246,6 +247,7 @@
                 <option value="88">88 Keys (Full)</option>
                 <option value="61">61 Keys</option>
                 <option value="49">49 Keys</option>
+                <option value="41">41 Keys</option>
                 <option value="25">25 Keys</option>
                 <option value="custom">Custom</option>
             </select>
@@ -277,8 +279,46 @@
                 class="mic-btn"
                 class:active={micEnabled}
                 onclick={toggleMic}
+                title={micEnabled ? "Stop Microphone" : "Start Microphone"}
+                aria-label={micEnabled ? "Stop Microphone" : "Start Microphone"}
             >
-                {micEnabled ? "Stop Mic" : "Start Mic"}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    {#if micEnabled}
+                        <!-- Mic Off / Recording / Active Style -->
+                        <path
+                            d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                        />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                    {:else}
+                        <!-- Mic On / Inactive Style -->
+                        <path
+                            d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                        />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                        <line
+                            x1="1"
+                            y1="1"
+                            x2="23"
+                            y2="23"
+                            stroke="transparent"
+                        />
+                        <!-- Just use standard mic for inactive, maybe 'slash' for consistency if desired, but user said 'mic icon' -->
+                    {/if}
+                </svg>
             </button>
         </div>
 
@@ -427,6 +467,35 @@
     button:hover,
     .file-btn:hover {
         background-color: #4b5563;
+    }
+
+    .mic-btn {
+        padding: 0.5rem;
+        border-radius: 50%; /* Circle */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 0;
+    }
+    .mic-btn.active {
+        background-color: #ef4444; /* Red for recording */
+        border-color: #dc2626;
+        animation: pulse 1.5s infinite;
+    }
+    .mic-btn.active:hover {
+        background-color: #dc2626;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
     }
 
     .piano-wrapper {
