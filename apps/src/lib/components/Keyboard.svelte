@@ -218,37 +218,37 @@
         }
     }
 
-    async function handlePointerDown(e: PointerEvent) {
+    async function initAudio(e: Event) {
         if (isWaitingForAudio) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        isWaitingForAudio = true;
+        try {
+            await audioEngine.ensureRunning();
+            isAudioEnabled = true;
+        } finally {
+            isWaitingForAudio = false;
+        }
+    }
+
+    async function handlePointerDown(e: PointerEvent) {
+        if (!isAudioEnabled) return; // Prevent interaction until audio is ready
         e.preventDefault();
 
         const keyboardEl = e.currentTarget as HTMLElement;
         const target = e.target as HTMLElement;
         const midi = getMidiFromElement(target);
 
-        // 1. Capture and visual feedback immediately (Synchronous)
         if (midi !== null) {
             try {
                 keyboardEl.setPointerCapture(e.pointerId);
             } catch (err) {
-                // Ignore if capture fails (e.g. pointer already up)
                 console.debug("Pointer capture failed", err);
             }
 
             pointerNotes.set(e.pointerId, midi);
             addRef(midi);
-        }
-
-        // 2. Init audio properly if needed
-        if (!isAudioEnabled) {
-            isWaitingForAudio = true;
-            try {
-                // Clicked empty space often serves as "unmute" gesture too
-                await audioEngine.ensureRunning();
-                isAudioEnabled = true;
-            } finally {
-                isWaitingForAudio = false;
-            }
         }
     }
 
@@ -380,7 +380,15 @@
     {/if}
 
     {#if !isAudioEnabled}
-        <div class="hint">Tap to Start Audio</div>
+        <button class="audio-overlay" onpointerdown={initAudio}>
+            <div class="hint">
+                {#if isWaitingForAudio}
+                    Loading...
+                {:else}
+                    Tap to Start Audio
+                {/if}
+            </div>
+        </button>
     {/if}
 </div>
 
@@ -482,6 +490,19 @@
         pointer-events: none;
         z-index: 50;
         font-size: 1.2rem;
+    }
+
+    .audio-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        outline: none;
     }
     .key-map-label {
         position: absolute;
