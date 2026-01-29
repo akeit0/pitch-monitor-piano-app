@@ -8,7 +8,51 @@
         showLabels = true,
         keyMap = {} as Record<string, number>,
         transpose = 0,
+        detectedPitch = null as number | null,
     } = $props();
+
+    // Helper for key positioning
+    const getAbsWhiteIndex = (m: number) => {
+        const octave = Math.floor(m / 12);
+        const note = m % 12; // 0..11
+        const whiteOffsets = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+        return octave * 7 + whiteOffsets[note];
+    };
+
+    let startWhiteIndex = $derived(getAbsWhiteIndex(rangeStart));
+
+    function getMarkerPosition(midi: number) {
+        if (!keys.numWhites) return 0;
+
+        const octave = Math.floor(midi / 12);
+        const semitone = midi % 12;
+        const index = Math.floor(semitone);
+        const fraction = semitone - index;
+
+        // Continuous positions for each semitone (0..11) in white key units
+        // Visual centers:
+        // C(0): 0.5, C#(1): 1.0, D(2): 1.5, D#(3): 2.0, E(4): 2.5
+        // F(5): 3.5 (Gap 1.0 from E), F#(6): 4.0, G(7): 4.5, G#(8): 5.0, A(9): 5.5, A#(10): 6.0, B(11): 6.5
+        // Next C is 7.5.
+        const offsets = [
+            0.5, 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5,
+        ];
+
+        const p1 = offsets[index];
+        const p2 = index === 11 ? 7.5 : offsets[index + 1]; // 7.5 = 7 + 0.5 (Next C)
+
+        // Interpolate
+        const notePos = p1 + (p2 - p1) * fraction;
+        const absPos = octave * 7 + notePos;
+
+        // Relative to start
+        // startWhiteIndex is the left edge of the first key.
+        // absPos is the center of the note.
+        // relative = absPos - startWhiteIndex * 1.0 (since startWhiteIndex is strictly integer white index)
+        const relPos = absPos - startWhiteIndex;
+
+        return relPos * (100 / keys.numWhites);
+    }
 
     // State
     let activeNotes = $state(new Set<number>());
@@ -232,6 +276,14 @@
             removeRef(targetMidi);
         }
     }
+
+    function formatPitch(midi: number) {
+        const rounded = Math.round(midi);
+        const diff = midi - rounded;
+        const cents = Math.round(diff * 100);
+        const sign = cents >= 0 ? "+" : "";
+        return `${getNoteName(rounded)} ${sign}${cents}`;
+    }
 </script>
 
 <svelte:window
@@ -285,6 +337,18 @@
             {/if}
         </div>
     {/each}
+
+    <!-- Pitch Marker -->
+    {#if detectedPitch !== null && detectedPitch - transpose >= rangeStart - 1 && detectedPitch - transpose <= rangeEnd + 1}
+        <div
+            class="pitch-marker"
+            style="left: {getMarkerPosition(detectedPitch - transpose)}%"
+        >
+            <div class="pitch-label">
+                {formatPitch(detectedPitch)}
+            </div>
+        </div>
+    {/if}
 </div>
 
 <div class="hint">
@@ -304,6 +368,34 @@
         overflow: hidden;
         user-select: none;
         touch-action: none;
+    }
+
+    .pitch-marker {
+        position: absolute;
+        top: 0;
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 10px solid #ef4444; /* red-500 */
+        z-index: 20;
+        transform: translateX(-50%);
+        pointer-events: none;
+        /* transition: left 50ms linear; */
+    }
+
+    .pitch-label {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        pointer-events: none;
     }
 
     .white-key {

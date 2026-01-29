@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import Keyboard from "$lib/components/Keyboard.svelte";
     import { audioEngine } from "$lib/audio/AudioEngine";
     import { settingsDB } from "$lib/utils/db";
+    import { MicrophoneManager } from "$lib/audio/Microphone";
+    import { PitchDetector } from "$lib/audio/PitchDetector";
 
     let showLabels = $state(true);
     let transpose = $state(0);
@@ -10,6 +12,56 @@
     let rangeStart = $state(48); // C3
     let rangeEnd = $state(72); // C5
     let selectedPreset = $state("25");
+
+    // Microphone & Pitch
+    let micEnabled = $state(false);
+    let detectedPitch = $state(null as number | null);
+    const micManager = new MicrophoneManager();
+    const pitchDetector = new PitchDetector();
+    let animationFrameId: number;
+
+    function detectPitchLoop() {
+        if (!micEnabled) return;
+
+        const data = micManager.getAudioData();
+        if (data) {
+            const freq = pitchDetector.detectPitch(
+                data.buffer,
+                data.sampleRate,
+            );
+            if (freq) {
+                // Convert to MIDI
+                detectedPitch = PitchDetector.freqToMidi(freq);
+            } else {
+                detectedPitch = null;
+            }
+        }
+        animationFrameId = requestAnimationFrame(detectPitchLoop);
+    }
+
+    async function toggleMic() {
+        if (micEnabled) {
+            micEnabled = false;
+            micManager.stop();
+            cancelAnimationFrame(animationFrameId);
+            detectedPitch = null;
+        } else {
+            try {
+                await micManager.start();
+                micEnabled = true;
+                detectPitchLoop();
+            } catch (e) {
+                alert("Could not access microphone: " + e);
+            }
+        }
+    }
+
+    onDestroy(() => {
+        if (micEnabled) {
+            micManager.stop();
+            cancelAnimationFrame(animationFrameId);
+        }
+    });
 
     const presets = {
         "88": { start: 21, end: 108, name: "88 Keys (A0 - C8)" },
@@ -183,6 +235,13 @@
                 <input type="checkbox" bind:checked={showLabels} />
                 Show Key Labels
             </label>
+            <button
+                class="mic-btn"
+                class:active={micEnabled}
+                onclick={toggleMic}
+            >
+                {micEnabled ? "Stop Mic" : "Start Mic"}
+            </button>
         </div>
 
         <!-- Key Map Controls -->
@@ -205,7 +264,14 @@
     </div>
 
     <div class="piano-wrapper">
-        <Keyboard {rangeStart} {rangeEnd} {showLabels} {keyMap} {transpose} />
+        <Keyboard
+            {rangeStart}
+            {rangeEnd}
+            {showLabels}
+            {keyMap}
+            {transpose}
+            {detectedPitch}
+        />
     </div>
 
     <button class="panic-btn" onclick={() => audioEngine.panic()}>
@@ -224,25 +290,6 @@
         padding: 1rem;
         gap: 1.5rem;
         box-sizing: border-box;
-    }
-
-    .header {
-        text-align: center;
-    }
-
-    h1 {
-        font-size: 2.25rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(to right, #60a5fa, #9333ea);
-        -webkit-background-clip: text;
-        color: transparent;
-        display: inline-block;
-    }
-
-    p {
-        color: #9ca3af;
-        margin: 0;
     }
 
     .controls-bar {
