@@ -4,7 +4,7 @@
     import { audioEngine } from "$lib/audio/AudioEngine";
     import { settingsDB } from "$lib/utils/db";
 
-    let showLabels = $state(false);
+    let showLabels = $state(true);
     let transpose = $state(0);
 
     let rangeStart = $state(48); // C3

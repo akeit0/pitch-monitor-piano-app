@@ -5,7 +5,7 @@
     let {
         rangeStart = 48, // C3
         rangeEnd = 72, // C5
-        showLabels = false,
+        showLabels = true,
         keyMap = {} as Record<string, number>,
         transpose = 0,
     } = $props();
