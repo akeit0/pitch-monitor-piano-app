@@ -1,12 +1,12 @@
 <script lang="ts">
-	import favicon from "$lib/assets/favicon.svg";
+	import pianoIcon from "$lib/assets/piano.svg";
 	import "../app.css";
 
 	let { children } = $props();
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={pianoIcon} />
 	<title>Piano App</title>
 </svelte:head>
 

@@ -74,8 +74,8 @@
         "88": { start: 21, end: 108, name: "88 Keys (A0 - C8)" },
         "61": { start: 36, end: 96, name: "61 Keys (C2 - C7)" },
         "49": { start: 41, end: 89, name: "49 Keys (F2 - F6)" },
-        "41": { start: 41, end: 80, name: "41 Keys (F2 - A5)" },
-        "25": { start: 48, end: 72, name: "25 Keys (C3 - C5)" },
+        "42": { start: 41, end: 82, name: "42 Keys (F2 - A#5)" },
+        "26": { start: 48, end: 73, name: "26 Keys (C3 - C#5)" },
     };
 
     function selectPreset() {
@@ -128,15 +128,58 @@
     let midiInputs = $state([] as WebMidi.MIDIInput[]);
     let selectedMidiId = $state("");
 
+    let settingsLoaded = $state(false);
+
     onMount(async () => {
         try {
             // midiManager.init(); // Init MIDI - Removed for manual activation
+
+            // Load KeyMap
             const savedMap = await settingsDB.loadKeyMap();
             if (savedMap) {
                 keyMap = savedMap;
             }
+
+            // Load Transpose
+            const savedTranspose = await settingsDB.loadTranspose();
+            if (savedTranspose !== null) {
+                transpose = savedTranspose;
+                audioEngine.setTranspose(transpose);
+            }
+
+            // Load Range
+            const savedRange = await settingsDB.loadRange();
+            if (savedRange) {
+                rangeStart = savedRange.start;
+                rangeEnd = savedRange.end;
+
+                // Try to match preset
+                let match = "custom";
+                for (const [key, p] of Object.entries(presets)) {
+                    if (p.start === rangeStart && p.end === rangeEnd) {
+                        match = key;
+                        break;
+                    }
+                }
+                selectedPreset = match;
+            }
+
+            settingsLoaded = true;
         } catch (e) {
-            console.error("Failed to load key map", e);
+            console.error("Failed to load settings", e);
+            settingsLoaded = true; // Enable saving even if load failed (to save future changes)
+        }
+    });
+
+    $effect(() => {
+        if (settingsLoaded) {
+            settingsDB.saveTranspose(transpose);
+        }
+    });
+
+    $effect(() => {
+        if (settingsLoaded) {
+            settingsDB.saveRange(rangeStart, rangeEnd);
         }
     });
 
@@ -302,40 +345,31 @@
         </div>
 
         <!-- Range Controls -->
-        <div class="control-group">
-            <label for="keyboard-size">Keyboard Size</label>
+        <div class="control-group keyboard-range">
+            <label for="keyboard-range">Keyboard Range</label>
             <select
-                id="keyboard-size"
+                id="keyboard-range"
                 bind:value={selectedPreset}
                 onchange={selectPreset}
             >
                 <option value="88">88 Keys (Full)</option>
                 <option value="61">61 Keys</option>
                 <option value="49">49 Keys</option>
-                <option value="41">41 Keys</option>
-                <option value="25">25 Keys</option>
+                <option value="42">42 Keys</option>
+                <option value="26">26 Keys</option>
                 <option value="custom">Custom</option>
             </select>
             {#if selectedPreset === "custom"}
                 <div class="custom-range">
-                    <label
-                        >Start: <input
-                            type="number"
-                            bind:value={rangeStart}
-                        /></label
-                    >
-                    <label
-                        >End: <input
-                            type="number"
-                            bind:value={rangeEnd}
-                        /></label
-                    >
+                    <input type="number" bind:value={rangeStart} />
+                    <input type="number" bind:value={rangeEnd} />
                 </div>
             {/if}
         </div>
 
         <!-- Display Options -->
         <div class="control-group">
+            <label for="mic-toggle">Microphone</label>
             <button
                 class="mic-btn"
                 class:active={micEnabled}
@@ -396,8 +430,8 @@
                     <!-- Improved DIN-5 Icon -->
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
+                        width="30"
+                        height="30"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -554,6 +588,10 @@
         font-weight: 500;
     }
 
+    .keyboard-range {
+        width: 10rem;
+    }
+
     .buttons {
         display: flex;
         gap: 0.5rem;
@@ -583,7 +621,6 @@
     .custom-range {
         display: flex;
         gap: 0.5rem;
-        margin-top: 0.5rem;
         justify-content: center;
     }
 

@@ -48,6 +48,50 @@ export class SettingsDB {
             req.onerror = () => reject(req.error);
         });
     }
+
+    async saveTranspose(transpose: number) {
+        const db = await this.connect();
+        return new Promise<void>((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(transpose, "transpose");
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async loadTranspose(): Promise<number | null> {
+        const db = await this.connect();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get("transpose");
+            req.onsuccess = () => resolve(req.result !== undefined ? req.result : null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async saveRange(start: number, end: number) {
+        const db = await this.connect();
+        return new Promise<void>((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put({ start, end }, "range");
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async loadRange(): Promise<{ start: number; end: number } | null> {
+        const db = await this.connect();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get("range");
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
 }
 
 export const settingsDB = new SettingsDB();
