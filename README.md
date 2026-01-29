@@ -71,6 +71,13 @@ npm run dev
 npm run tauri dev
 ```
 
+### Build for GitHub Pages
+Use the automated script (works on Windows/Mac/Linux):
+```bash
+npm run build:github
+```
+This builds the app to the `../docs` folder.
+
 ## License
 
 MIT
