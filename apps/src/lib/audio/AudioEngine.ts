@@ -23,6 +23,13 @@ export class AudioEngine {
 
         console.log("AudioEngine: creating AudioContext");
         this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+        // Handle auto-resume if created in suspended state (common in browsers)
+        if (this.context.state === 'suspended') {
+            console.log("AudioContext created in suspended state. Attempting resume...");
+            this.context.resume().catch(e => console.debug("Auto-resume failed", e));
+        }
+
         this.masterGain = this.context.createGain();
         this.masterGain.connect(this.context.destination);
         this.masterGain.gain.value = 0.5;
@@ -80,10 +87,11 @@ export class AudioEngine {
             await this.init();
         }
 
-        if (this.context && this.context.state === 'suspended') {
-            await this.context.resume();
-            if (this.context.state === 'suspended') {
-                console.warn("AudioContext still suspended after resume call");
+        if (this.context && this.context.state !== 'running') {
+            try {
+                await this.context.resume();
+            } catch (err) {
+                console.warn("AudioEngine: Context resume failed (interaction needed?)", err);
             }
         }
     }
@@ -106,7 +114,7 @@ export class AudioEngine {
         const actualPitch = pitch + this.transpose;
 
         // Stop existing note of same pitch
-        this.noteOff(pitch); // We use original pitch for tracking active envelopes logic relative to keys
+        this.noteOff(pitch);
 
         const when = this.context.currentTime;
         const volume = Math.max(0, Math.min(1, velocity / 127));
