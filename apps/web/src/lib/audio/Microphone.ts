@@ -1,9 +1,9 @@
 export class MicrophoneManager {
-    audioContext: AudioContext;
-    analyser: AnalyserNode;
+    audioContext: AudioContext = null!;
+    analyser: AnalyserNode = null!;
     mediaStream: MediaStream | null = null;
     source: MediaStreamAudioSourceNode | null = null;
-    buffer: Float32Array;
+    buffer: Float32Array<ArrayBuffer> = null!;
 
     constructor() {
         // We create context only on start because browsers require user gesture

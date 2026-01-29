@@ -271,32 +271,30 @@
         </div>
     </div>
 
-    {#if micEnabled}
-        <div class="fixed-pitch-display">
-            <div class="pitch-note">{pitchInfo?.note ?? "--"}</div>
-            <div class="pitch-cents">
-                <div class="cents-value">
-                    {pitchInfo
-                        ? (pitchInfo.cents > 0 ? "+" : "") + pitchInfo.cents
-                        : "--"} cents
-                </div>
-                <div class="cents-meter">
-                    <div class="meter-center"></div>
-                    {#if pitchInfo}
-                        <div
-                            class="meter-pointer"
-                            style="left: {50 + pitchInfo.cents}%"
-                        ></div>
-                    {/if}
-                </div>
-                <div class="meter-labels">
-                    <span>-50</span>
-                    <span>0</span>
-                    <span>+50</span>
-                </div>
+    <div class="fixed-pitch-display">
+        <div class="pitch-note">{pitchInfo?.note ?? "--"}</div>
+        <div class="pitch-cents">
+            <div class="cents-value">
+                {pitchInfo
+                    ? (pitchInfo.cents > 0 ? "+" : "") + pitchInfo.cents
+                    : "--"} cents
+            </div>
+            <div class="cents-meter">
+                <div class="meter-center"></div>
+                {#if pitchInfo}
+                    <div
+                        class="meter-pointer"
+                        style="left: {50 + pitchInfo.cents}%"
+                    ></div>
+                {/if}
+            </div>
+            <div class="meter-labels">
+                <span>-50</span>
+                <span>0</span>
+                <span>+50</span>
             </div>
         </div>
-    {/if}
+    </div>
     <div class="piano-wrapper">
         <Keyboard
             {rangeStart}
@@ -402,8 +400,6 @@
     }
 
     .piano-wrapper {
-        position: fixed;
-        bottom: 0;
         width: 100%;
         background-color: rgba(17, 24, 39, 0.5);
         border: 1px solid #1f2937;
@@ -419,7 +415,7 @@
 
     .fixed-pitch-display {
         display: flex;
-        flex-direction: column;
+        flex-direction: column-reverse;
         align-items: center;
         background-color: rgba(31, 41, 55, 0.8);
         padding: 1rem 2rem;

@@ -291,7 +291,7 @@ export default class WebAudioFontPlayer {
     }
 
     findEnvelope(audioContext: AudioContext, target: AudioNode): any {
-        let envelope = null;
+        let envelope: any = null;
         for (let i = 0; i < this.envelopes.length; i++) {
             const e = this.envelopes[i];
             if (e.target == target && audioContext.currentTime > e.when + e.duration + 0.001) {
