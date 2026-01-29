@@ -360,7 +360,7 @@
         position: relative;
         display: flex;
         width: 100%;
-        height: 20rem; /* 80 equivalent */
+        height: 16rem;
         background-color: #111827;
         border-radius: 0.5rem;
         overflow: hidden;
@@ -400,8 +400,8 @@
         flex: 1;
         background-color: white;
         border: 1px solid #d1d5db;
-        border-bottom-left-radius: 0.375rem;
-        border-bottom-right-radius: 0.375rem;
+        border-bottom-left-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
         position: relative;
         z-index: 0;
         transition: background-color 75ms;
@@ -424,11 +424,11 @@
 
     .black-key {
         position: absolute;
-        height: 12rem; /* 48 equivalent */
+        height: 10rem;
         background-color: black;
         z-index: 10;
-        border-bottom-left-radius: 0.125rem;
-        border-bottom-right-radius: 0.125rem;
+        border-bottom-left-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
         border-left: 1px solid #1f2937;
         border-bottom: 1px solid #1f2937;
         border-right: 1px solid #1f2937;
