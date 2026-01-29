@@ -87,28 +87,38 @@
     }
 
     const defaultKeyMap = {
+        a: -10,
         z: -9,
+        s: -8,
         x: -7,
+        d: -6,
         c: -5,
         v: -4,
+        g: -3,
         b: -2,
+        h: -1,
         n: 0,
+        j: 1,
         m: 2,
-        a: 3,
-        w: 4,
-        s: 5,
-        e: 6,
-        d: 7,
-        f: 8,
-        t: 9,
-        g: 10,
-        y: 11,
-        h: 12,
-        u: 13,
-        j: 14,
-        k: 15,
-        o: 16,
-        l: 17,
+        "1": 2,
+        ",": 3,
+        q: 3,
+        "2": 4,
+        w: 5,
+        "3": 6,
+        e: 7,
+        r: 8,
+        "5": 9,
+        t: 10,
+        "6": 11,
+        y: 12,
+        "7": 13,
+        u: 14,
+        i: 15,
+        "9": 16,
+        o: 17,
+        "0": 18,
+        p: 19,
     };
 
     let keyMap: Record<string, number> = $state({ ...defaultKeyMap });
@@ -324,6 +334,54 @@
             {/if}
         </div>
 
+        <!-- Display Options -->
+        <div class="control-group">
+            <button
+                class="mic-btn"
+                class:active={micEnabled}
+                onclick={toggleMic}
+                title={micEnabled ? "Stop Microphone" : "Start Microphone"}
+                aria-label={micEnabled ? "Stop Microphone" : "Start Microphone"}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="30"
+                    height="30"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    {#if micEnabled}
+                        <!-- Mic Off / Recording / Active Style -->
+                        <path
+                            d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                        />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                    {:else}
+                        <!-- Mic On / Inactive Style -->
+                        <path
+                            d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                        />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                        <line
+                            x1="1"
+                            y1="1"
+                            x2="23"
+                            y2="23"
+                            stroke="transparent"
+                        />
+                        <!-- Just use standard mic for inactive, maybe 'slash' for consistency if desired, but user said 'mic icon' -->
+                    {/if}
+                </svg>
+            </button>
+        </div>
         <!-- MIDI Controls -->
         <div class="control-group">
             <label for="midi-toggle">MIDI Input</label>
@@ -400,56 +458,6 @@
                 {/if}
             </div>
         </div>
-
-        <!-- Display Options -->
-        <div class="control-group">
-            <button
-                class="mic-btn"
-                class:active={micEnabled}
-                onclick={toggleMic}
-                title={micEnabled ? "Stop Microphone" : "Start Microphone"}
-                aria-label={micEnabled ? "Stop Microphone" : "Start Microphone"}
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="30"
-                    height="30"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    {#if micEnabled}
-                        <!-- Mic Off / Recording / Active Style -->
-                        <path
-                            d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
-                        />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" y1="19" x2="12" y2="23" />
-                        <line x1="8" y1="23" x2="16" y2="23" />
-                    {:else}
-                        <!-- Mic On / Inactive Style -->
-                        <path
-                            d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
-                        />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" y1="19" x2="12" y2="23" />
-                        <line x1="8" y1="23" x2="16" y2="23" />
-                        <line
-                            x1="1"
-                            y1="1"
-                            x2="23"
-                            y2="23"
-                            stroke="transparent"
-                        />
-                        <!-- Just use standard mic for inactive, maybe 'slash' for consistency if desired, but user said 'mic icon' -->
-                    {/if}
-                </svg>
-            </button>
-        </div>
-
         <!-- Key Map Controls -->
         <div class="control-group">
             <label for="key-map">Key Map</label>
