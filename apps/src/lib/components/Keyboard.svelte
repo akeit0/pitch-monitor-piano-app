@@ -268,8 +268,7 @@
     // State
     let activeNotes = $state(new Set<number>());
     let isAudioEnabled = $state(false);
-    // svelte-ignore non_reactive_update
-    let isWaitingForAudio = false;
+    let isWaitingForAudio = $state(false);
 
     // Derived: Reverse map for display: midi -> list of keys (labels)
     // We want the label to guide the user on WHICH KEY converts to the sound.
