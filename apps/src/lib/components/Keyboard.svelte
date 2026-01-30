@@ -676,7 +676,7 @@
         width: 100%;
         flex: 1; /* Take remaining space */
         min-height: 0; /* Allow shrinking in flex context */
-        overflow-x: auto; /* Allow scrolling */
+        overflow-x: hidden; /* Disable native scrolling - use custom scrollbar only */
         overflow-y: hidden;
         scrollbar-width: none; /* Firefox */
         -ms-overflow-style: none; /* IE/Edge */
