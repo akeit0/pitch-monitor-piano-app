@@ -683,7 +683,7 @@
         background-color: #111827;
         border-radius: 0.5rem;
         position: relative;
-        touch-action: pan-y; /* Only allow vertical panning, prevent horizontal swipe scroll */
+        touch-action: none; /* Disable native scrolling */
     }
     .keyboard-scroll-container::-webkit-scrollbar {
         display: none; /* Chrome/Safari */

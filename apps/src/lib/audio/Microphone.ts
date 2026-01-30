@@ -28,7 +28,15 @@ export class MicrophoneManager {
         }
 
         try {
-            this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Disable audio processing that might affect output volume on mobile
+            this.mediaStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    // Some browsers may not support all options, but they'll be ignored
+                }
+            });
 
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = 2048; // Good resolution for pitch detection

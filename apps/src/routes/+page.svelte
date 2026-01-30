@@ -555,6 +555,7 @@
             {detectedPitch}
         />
     </div>
+    <div class="version-indicator">v0.1.3</div>
 </div>
 
 <style>
@@ -809,5 +810,15 @@
         .pitch-note {
             font-size: 1.5rem;
         }
+    }
+
+    .version-indicator {
+        position: fixed;
+        bottom: 4px;
+        right: 8px;
+        font-size: 1rem;
+        color: rgba(156, 163, 175, 0.5);
+        pointer-events: none;
+        z-index: 1000;
     }
 </style>
