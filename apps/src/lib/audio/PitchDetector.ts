@@ -20,7 +20,7 @@ export class PitchDetector {
      */
     constructor(
         private readonly minFreq: number = 50,     // Hz（低音まで取りたいなら下げる）
-        private readonly maxFreq: number = 1000,   // Hz（声なら 800〜1200 くらいが実用的）
+        private readonly maxFreq: number = 2000,   // Hz（声なら 800〜1200 くらいが実用的）
         private readonly rmsThreshold: number = 0.01,
         private readonly peakThreshold: number = 0.25
     ) { }
