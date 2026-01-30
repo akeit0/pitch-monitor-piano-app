@@ -814,8 +814,8 @@
 
     .version-indicator {
         position: fixed;
-        bottom: 4px;
-        right: 8px;
+        top: 16px;
+        left: 16px;
         font-size: 1rem;
         color: rgba(156, 163, 175, 0.5);
         pointer-events: none;
