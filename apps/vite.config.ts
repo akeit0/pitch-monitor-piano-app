@@ -1,5 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import pkg from './package.json'
 
 export default defineConfig({
 	plugins: [
@@ -16,6 +17,9 @@ export default defineConfig({
 			}
 		}
 	],
+	define: {
+		__APP_VERSION__: JSON.stringify(pkg.version),
+	},
 	build: {
 		// Piano soundfont is ~1.2MB, this is expected
 		chunkSizeWarningLimit: 1500
