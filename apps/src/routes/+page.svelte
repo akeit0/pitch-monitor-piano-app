@@ -56,7 +56,11 @@
             await audioEngine.ensureRunning();
         } else {
             try {
-                await micManager.start();
+                // Ensure audio engine is running first so we can share its context
+                await audioEngine.ensureRunning();
+                // Pass shared AudioContext to prevent volume issues on mobile
+                const sharedContext = audioEngine.getContext();
+                await micManager.start(sharedContext ?? undefined);
                 micEnabled = true;
                 detectPitchLoop();
             } catch (e) {

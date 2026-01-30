@@ -102,6 +102,14 @@ export class AudioEngine {
         }
     }
 
+    /**
+     * Get the AudioContext for sharing with other audio components.
+     * Returns null if not initialized.
+     */
+    getContext(): AudioContext | null {
+        return this.context;
+    }
+
     transpose: number = 0;
 
     setTranspose(semitones: number) {

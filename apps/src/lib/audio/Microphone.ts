@@ -1,19 +1,28 @@
 export class MicrophoneManager {
-    audioContext: AudioContext = null!;
-    analyser: AnalyserNode = null!;
+    audioContext: AudioContext | null = null;
+    analyser: AnalyserNode | null = null;
     mediaStream: MediaStream | null = null;
     source: MediaStreamAudioSourceNode | null = null;
-    buffer: Float32Array<ArrayBuffer> = null!;
+    buffer: Float32Array<ArrayBuffer> | null = null;
 
     constructor() {
         // We create context only on start because browsers require user gesture
         // But we can instantiate the class early.
     }
 
-    async start() {
-        if (!this.audioContext) {
+    /**
+     * Start microphone input.
+     * @param sharedContext Optional shared AudioContext to use instead of creating a new one.
+     *                      Using a shared context prevents audio volume issues on mobile.
+     */
+    async start(sharedContext?: AudioContext) {
+        // Use shared context if provided, otherwise create a new one
+        if (sharedContext) {
+            this.audioContext = sharedContext;
+        } else if (!this.audioContext) {
             this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
+
         if (this.audioContext.state === 'suspended') {
             await this.audioContext.resume();
         }
@@ -47,12 +56,12 @@ export class MicrophoneManager {
             this.source.disconnect();
             this.source = null;
         }
-        // We keep audioContext alive or close it? 
-        // Better to keep it if we restart.
+        // Don't close the audioContext if it was shared
+        // Keep analyser reference but it's now disconnected
     }
 
     getAudioData(): { buffer: Float32Array, sampleRate: number } | null {
-        if (!this.analyser) return null;
+        if (!this.analyser || !this.audioContext || !this.buffer) return null;
         this.analyser.getFloatTimeDomainData(this.buffer);
         return {
             buffer: this.buffer,

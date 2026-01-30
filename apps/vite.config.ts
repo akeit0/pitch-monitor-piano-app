@@ -15,5 +15,9 @@ export default defineConfig({
 				}
 			}
 		}
-	]
+	],
+	build: {
+		// Piano soundfont is ~1.2MB, this is expected
+		chunkSizeWarningLimit: 1500
+	}
 });
