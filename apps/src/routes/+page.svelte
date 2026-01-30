@@ -555,7 +555,7 @@
             {detectedPitch}
         />
     </div>
-    <div class="version-indicator">v0.1.6</div>
+    <div class="version-indicator">v0.1.7</div>
 </div>
 
 <style>

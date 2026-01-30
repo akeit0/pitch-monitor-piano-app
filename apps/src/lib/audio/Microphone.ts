@@ -30,15 +30,13 @@ export class MicrophoneManager {
         try {
             // Try with preferred constraints first (disable processing that affects volume)
             // Use 'ideal' instead of required so it falls back gracefully
-            // try {
-            //     this.mediaStream = await navigator.mediaDevices.getUserMedia({
-            //         audio: {
-            //             echoCancellation: { ideal: false },
-            //             autoGainControl: { ideal: false },
-            //         }
-            //     });
-            // } catch
-            {
+            try {
+                this.mediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        autoGainControl: { ideal: false },
+                    }
+                });
+            } catch {
                 // Fallback to basic audio if preferred constraints fail
                 //
                 console.log("Microphone: Using basic audio constraints");
