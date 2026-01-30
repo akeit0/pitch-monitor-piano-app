@@ -1,0 +1,26 @@
+# Build output - now handled by GitHub Actions
+docs/
+
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Svelte/Vite
+.svelte-kit/
+build/
+dist/
+
+# Tauri
+apps/src-tauri/target/
