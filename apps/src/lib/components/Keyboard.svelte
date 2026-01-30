@@ -121,6 +121,20 @@
     let keyboardEl: HTMLDivElement;
     let scrollbarTrack: HTMLDivElement;
 
+    // Helper to detect if body is CSS-rotated (portrait mobile displays as landscape)
+    function isRotatedPortrait(): boolean {
+        if (typeof window === "undefined") return false;
+        const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+        const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
+        return isPortrait && isSmallScreen;
+    }
+
+    // Get the scroll-relevant X coordinate, accounting for CSS rotation
+    function getScrollX(e: PointerEvent): number {
+        // When body is rotated 90deg, visual X axis is actual Y axis
+        return isRotatedPortrait() ? e.clientY : e.clientX;
+    }
+
     // Scrollbar Logic
     let isDraggingScroll = false;
     let startX = 0;
@@ -154,8 +168,11 @@
         // Click on track handling (jump to position)
         if (!scrollContainer) return;
         const rect = scrollbarTrack.getBoundingClientRect();
-        const clickX = e.clientX - rect.left; // pixel within track
-        const ratio = clickX / rect.width;
+        const rotated = isRotatedPortrait();
+        // When rotated, visual "X" axis is actual "Y" axis
+        const clickPos = rotated ? e.clientY - rect.top : e.clientX - rect.left;
+        const trackSize = rotated ? rect.height : rect.width;
+        const ratio = clickPos / trackSize;
 
         // We want to center the thumb on click if possible, or just jump?
         // Standard behavior: jump to that spot (centered if possible)
@@ -175,7 +192,7 @@
         e.stopPropagation(); // Stop bubbling to track
 
         isDraggingScroll = true;
-        startX = e.clientX;
+        startX = getScrollX(e);
         startScrollLeft = scrollContainer.scrollLeft;
 
         const thumbElement = e.target as HTMLElement;
@@ -203,9 +220,12 @@
             if (ev.pointerId !== e.pointerId) return;
             ev.preventDefault();
 
-            const dx = ev.clientX - startX;
+            const dx = getScrollX(ev) - startX;
             const trackRect = scrollbarTrack.getBoundingClientRect();
-            const trackWidth = trackRect.width;
+            // When rotated, trackWidth is actually trackHeight
+            const trackWidth = isRotatedPortrait()
+                ? trackRect.height
+                : trackRect.width;
 
             if (trackWidth === 0) return;
 

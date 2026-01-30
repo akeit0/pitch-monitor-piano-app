@@ -28,15 +28,21 @@ export class MicrophoneManager {
         }
 
         try {
-            // Disable audio processing that might affect output volume on mobile
-            this.mediaStream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                    autoGainControl: false,
-                    // Some browsers may not support all options, but they'll be ignored
-                }
-            });
+            // Try with preferred constraints first (disable processing that affects volume)
+            // Use 'ideal' instead of required so it falls back gracefully
+            try {
+                this.mediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: { ideal: false },
+                        noiseSuppression: { ideal: false },
+                        autoGainControl: { ideal: false },
+                    }
+                });
+            } catch {
+                // Fallback to basic audio if preferred constraints fail
+                console.log("Microphone: Using basic audio constraints");
+                this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
 
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = 2048; // Good resolution for pitch detection
