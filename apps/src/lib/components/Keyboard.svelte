@@ -19,7 +19,70 @@
         return octave * 7 + whiteOffsets[note];
     };
 
-    let startWhiteIndex = $derived(getAbsWhiteIndex(rangeStart));
+    // Full 88-key range A0-C8
+    const MIN_MIDI = 21;
+    const MAX_MIDI = 108;
+
+    let startWhiteIndex = $derived(getAbsWhiteIndex(MIN_MIDI));
+
+    // Calculate keyboard width scaling based on selected range
+    // We want the range [rangeStart, rangeEnd] to fill the viewport (100% width)
+    // The total width of 88 keys will be larger than 100%
+    let keyboardWidthPercent = $derived.by(() => {
+        // Find number of white keys in the selected range
+        // rangeStart and rangeEnd are inclusive MIDI numbers
+        // We need to count how many white keys are in this range
+
+        const startWhite = getAbsWhiteIndex(rangeStart);
+        // For rangeEnd, we want to include the key itself.
+        // getAbsWhiteIndex returns index of the key if white.
+        // If rangeEnd is black, its "index" in white keys logic needs care if we just subtract.
+        // But getAbsWhiteIndex handles white key "slots".
+        // Let's rely on consistent white key count logic.
+        // keys.whites contains all white keys. We can filter.
+
+        let visibleIds = 0;
+        // Simple logic: difference in absolute white index + 1 if both are white?
+        // Let's count properly:
+        // We can use the global counting logic.
+
+        // Count white keys in [rangeStart, rangeEnd]
+        // MIN_MIDI is 21 (A0).
+        // Let's use the helper.
+        const endWhite = getAbsWhiteIndex(rangeEnd);
+
+        // Number of white keys to show
+        let visibleCount = endWhite - startWhite;
+
+        // Correct for fencepost: if rangeStart is white, it has index X.
+        // if rangeEnd is white, it has index Y. Count is Y - X + 1?
+        // let's check: C (0), D (1). Count 2. 1-0 = 1. So +1.
+        // But getAbsWhiteIndex returns the "slot".
+        // D is 1. C is 0.
+        // If start=C, end=D. visible=2 keys.
+        // 1 - 0 = 1. So we need +1 for the count.
+        // HOWEVER, we need to consider if start/end are black keys.
+        // If start is C#, it shares slot 0 or 1?
+        // Implement logic:
+        // white key width logic is consistent.
+        // We can just count how many white keys are >= start and <= end.
+        let count = 0;
+        for (let i = rangeStart; i <= rangeEnd; i++) {
+            const note = i % 12;
+            const isWhite = ![1, 3, 6, 8, 10].includes(note);
+            if (isWhite) count++;
+        }
+
+        // If range is all black keys? unlikley but possible. At least 1 white usually.
+        // If count is 0 (e.g. single black key), width is infinity? clamp it.
+        if (count < 1) count = 1;
+
+        // Total white keys in 88 layout (21 to 108) = 52
+        const totalCount = 52;
+
+        // Scale factor: Total / Visible
+        return (totalCount / count) * 100;
+    });
 
     function getMarkerPosition(midi: number) {
         if (!keys.numWhites) return 0;
@@ -54,9 +117,158 @@
         return relPos * (100 / keys.numWhites);
     }
 
+    let scrollContainer: HTMLDivElement;
+    let keyboardEl: HTMLDivElement;
+    let scrollbarTrack: HTMLDivElement;
+
+    // Scrollbar Logic
+    let isDraggingScroll = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    // Use object state for better reactivity in callbacks
+    let scrollbarState = $state({ thumbWidth: 100, thumbLeft: 0 });
+
+    function updateScrollState() {
+        if (!scrollContainer) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
+
+        // Prevent division by zero
+        if (scrollWidth === 0) return;
+
+        let newThumbWidth = (clientWidth / scrollWidth) * 100;
+        let newThumbLeft = (scrollLeft / scrollWidth) * 100;
+
+        // Clamp
+        if (newThumbWidth > 100) newThumbWidth = 100;
+        if (newThumbLeft < 0) newThumbLeft = 0;
+        if (newThumbLeft + newThumbWidth > 100)
+            newThumbLeft = 100 - newThumbWidth;
+
+        // Update state object
+        scrollbarState.thumbWidth = newThumbWidth;
+        scrollbarState.thumbLeft = newThumbLeft;
+    }
+
+    function handleScrollbarDown(e: PointerEvent) {
+        // Click on track handling (jump to position)
+        if (!scrollContainer) return;
+        const rect = scrollbarTrack.getBoundingClientRect();
+        const clickX = e.clientX - rect.left; // pixel within track
+        const ratio = clickX / rect.width;
+
+        // We want to center the thumb on click if possible, or just jump?
+        // Standard behavior: jump to that spot (centered if possible)
+        const totalScroll = scrollContainer.scrollWidth;
+        const visibleW = scrollContainer.clientWidth;
+
+        // target scrollLeft = (ratio * total) - (visible / 2)
+        const target = ratio * totalScroll - visibleW / 2;
+
+        scrollContainer.scrollTo({ left: target, behavior: "smooth" });
+        // Manually update state ensuring immediate feedback
+        requestAnimationFrame(() => updateScrollState());
+    }
+
+    function handleThumbDown(e: PointerEvent) {
+        e.preventDefault();
+        e.stopPropagation(); // Stop bubbling to track
+
+        isDraggingScroll = true;
+        startX = e.clientX;
+        startScrollLeft = scrollContainer.scrollLeft;
+
+        const thumbElement = e.target as HTMLElement;
+        try {
+            thumbElement.setPointerCapture(e.pointerId);
+        } catch (err) {
+            /* ignore */
+        }
+
+        const pointerUp = (ev: PointerEvent) => {
+            if (ev.pointerId !== e.pointerId) return;
+            isDraggingScroll = false;
+            window.removeEventListener("pointerup", pointerUp);
+            window.removeEventListener("pointermove", pointerMove);
+            try {
+                thumbElement.releasePointerCapture(ev.pointerId);
+            } catch (err) {
+                /* ignore */
+            }
+        };
+
+        const pointerMove = (ev: PointerEvent) => {
+            if (!isDraggingScroll || !scrollContainer || !scrollbarTrack)
+                return;
+            if (ev.pointerId !== e.pointerId) return;
+            ev.preventDefault();
+
+            const dx = ev.clientX - startX;
+            const trackRect = scrollbarTrack.getBoundingClientRect();
+            const trackWidth = trackRect.width;
+
+            if (trackWidth === 0) return;
+
+            const totalScrollW = scrollContainer.scrollWidth;
+            const clientW = scrollContainer.clientWidth;
+            const scrollRatio = totalScrollW / trackWidth;
+
+            // Clamp scroll position
+            const maxScroll = Math.max(0, totalScrollW - clientW);
+            let scrollTarget = startScrollLeft + dx * scrollRatio;
+            scrollTarget = Math.max(0, Math.min(scrollTarget, maxScroll));
+
+            scrollContainer.scrollLeft = scrollTarget;
+            updateScrollState();
+        };
+
+        window.addEventListener("pointerup", pointerUp);
+        window.addEventListener("pointermove", pointerMove);
+    }
+
+    // Watch for range changes to update scroll position
+    $effect(() => {
+        if (scrollContainer && keys.numWhites > 0) {
+            // Recalculate basic metrics
+            const startWhite = getAbsWhiteIndex(rangeStart);
+            const baseWhite = getAbsWhiteIndex(MIN_MIDI);
+            const diffWhite = startWhite - baseWhite;
+
+            const totalScrollWidth = scrollContainer.scrollWidth;
+
+            // Ratio: (Distance to RangeStart in white keys) / (Total White Keys)
+            const ratio = diffWhite / keys.numWhites; // 0..1
+
+            const targetLeft = ratio * totalScrollWidth;
+
+            scrollContainer.scrollLeft = targetLeft;
+            updateScrollState();
+        }
+    });
+
+    // Also update on resize
+    $effect(() => {
+        const resizeObserver = new ResizeObserver(() => {
+            updateScrollState();
+        });
+        if (scrollContainer) resizeObserver.observe(scrollContainer);
+        return () => resizeObserver.disconnect();
+    });
+
+    // Initialize scroll state on mount
+    $effect(() => {
+        if (scrollContainer) {
+            // Use requestAnimationFrame to ensure DOM is fully rendered
+            requestAnimationFrame(() => {
+                updateScrollState();
+            });
+        }
+    });
+
     // State
     let activeNotes = $state(new Set<number>());
     let isAudioEnabled = $state(false);
+    // svelte-ignore non_reactive_update
     let isWaitingForAudio = false;
 
     // Derived: Reverse map for display: midi -> list of keys (labels)
@@ -154,7 +366,7 @@
         return { whites, blacks, numWhites: whiteCount };
     }
 
-    let keys = $derived(generateKeys(rangeStart, rangeEnd));
+    let keys = $derived(generateKeys(MIN_MIDI, MAX_MIDI));
 
     // Pointer Management
     let pointerNotes = new Map<number, number>(); // pointerId -> midi
@@ -322,62 +534,94 @@
     onpointercancel={handleWindowPointerUp}
 />
 
-<div
-    class="keyboard"
-    onpointerdown={handlePointerDown}
-    onpointermove={handlePointerMove}
-    oncontextmenu={(e) => e.preventDefault()}
-    role="application"
-    aria-label="Virtual Piano Keyboard"
->
-    <!-- White Keys -->
-    {#each keys.whites as key}
+<div class="keyboard-main-wrapper">
+    <div
+        class="scrollbar-track"
+        bind:this={scrollbarTrack}
+        onpointerdown={handleScrollbarDown}
+        role="scrollbar"
+        aria-controls="keyboard-container"
+        aria-valuenow={scrollbarState.thumbLeft}
+        aria-valuemin="0"
+        aria-valuemax="100"
+        tabindex="0"
+    >
         <div
-            class="white-key"
-            class:active={activeNotes.has(key.midi)}
-            data-note={key.midi}
+            class="scrollbar-thumb"
+            style="width: {scrollbarState.thumbWidth}%; left: {scrollbarState.thumbLeft}%;"
+            onpointerdown={handleThumbDown}
+            role="none"
+        ></div>
+    </div>
+
+    <div
+        id="keyboard-container"
+        class="keyboard-scroll-container"
+        bind:this={scrollContainer}
+        onscroll={updateScrollState}
+    >
+        <div
+            class="keyboard"
+            bind:this={keyboardEl}
+            onpointerdown={handlePointerDown}
+            onpointermove={handlePointerMove}
+            oncontextmenu={(e) => e.preventDefault()}
+            role="application"
+            aria-label="Virtual Piano Keyboard"
+            style="width: {keyboardWidthPercent}%;"
         >
-            <div class="note-label">
-                {key.midi % 12 === 0 // Show C labels
-                    ? getNoteName(key.midi + transpose)
-                    : ""}
-            </div>
-            {#if showLabels && midiToKeyLabels.has(key.midi)}
-                <div class="key-map-label keyboard-labels">
-                    {midiToKeyLabels.get(key.midi)?.join(" ")}
+            <!-- White Keys -->
+            {#each keys.whites as key}
+                <div
+                    class="white-key"
+                    class:active={activeNotes.has(key.midi)}
+                    data-note={key.midi}
+                >
+                    <div class="note-label">
+                        {key.midi % 12 === 0 // Show C labels
+                            ? getNoteName(key.midi + transpose)
+                            : ""}
+                    </div>
+                    {#if showLabels && midiToKeyLabels.has(key.midi)}
+                        <div class="key-map-label keyboard-labels">
+                            {midiToKeyLabels.get(key.midi)?.join(" ")}
+                        </div>
+                    {/if}
+                </div>
+            {/each}
+
+            <!-- Black Keys -->
+            {#each keys.blacks as key}
+                <div
+                    class="black-key"
+                    class:active={activeNotes.has(key.midi)}
+                    style="width: {80 / keys.numWhites}%; left: {key.pos *
+                        (100 / keys.numWhites)}%;"
+                    data-note={key.midi}
+                >
+                    {#if showLabels && midiToKeyLabels.has(key.midi)}
+                        <div class="key-map-label-black keyboard-labels">
+                            {midiToKeyLabels.get(key.midi)?.join(", ")}
+                        </div>
+                    {/if}
+                </div>
+            {/each}
+
+            <!-- Pitch Marker -->
+            {#if detectedPitch !== null && detectedPitch - transpose >= MIN_MIDI - 1 && detectedPitch - transpose <= MAX_MIDI + 1}
+                <div
+                    class="pitch-marker"
+                    style="left: {getMarkerPosition(
+                        detectedPitch - transpose,
+                    )}%"
+                >
+                    <div class="pitch-label">
+                        {formatPitch(detectedPitch)}
+                    </div>
                 </div>
             {/if}
         </div>
-    {/each}
-
-    <!-- Black Keys -->
-    {#each keys.blacks as key}
-        <div
-            class="black-key"
-            class:active={activeNotes.has(key.midi)}
-            style="width: {80 / keys.numWhites}%; left: {key.pos *
-                (100 / keys.numWhites)}%;"
-            data-note={key.midi}
-        >
-            {#if showLabels && midiToKeyLabels.has(key.midi)}
-                <div class="key-map-label-black keyboard-labels">
-                    {midiToKeyLabels.get(key.midi)?.join(", ")}
-                </div>
-            {/if}
-        </div>
-    {/each}
-
-    <!-- Pitch Marker -->
-    {#if detectedPitch !== null && detectedPitch - transpose >= rangeStart - 1 && detectedPitch - transpose <= rangeEnd + 1}
-        <div
-            class="pitch-marker"
-            style="left: {getMarkerPosition(detectedPitch - transpose)}%"
-        >
-            <div class="pitch-label">
-                {formatPitch(detectedPitch)}
-            </div>
-        </div>
-    {/if}
+    </div>
 
     {#if !isAudioEnabled}
         <button class="audio-overlay" onpointerdown={initAudio}>
@@ -393,16 +637,68 @@
 </div>
 
 <style>
+    .keyboard-main-wrapper {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative; /* For audio overlay positioning */
+    }
+
+    .scrollbar-track {
+        width: 100%;
+        height: 30px;
+        flex-shrink: 0; /* Prevent shrinking */
+        background-color: #374151;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        position: relative;
+        cursor: pointer;
+        touch-action: none;
+    }
+
+    .scrollbar-thumb {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        background-color: #9ca3af;
+        border-radius: 3px;
+        cursor: grab;
+        touch-action: none;
+    }
+    .scrollbar-thumb:active {
+        background-color: #d1d5db;
+        cursor: grabbing;
+    }
+
+    .keyboard-scroll-container {
+        width: 100%;
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking in flex context */
+        overflow-x: auto; /* Allow scrolling */
+        overflow-y: hidden;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+        background-color: #111827;
+        border-radius: 0.5rem;
+        position: relative;
+    }
+    .keyboard-scroll-container::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+
     .keyboard {
+        /* transform: rotateX(180deg); Removed because we removed scroll container rotation */
         position: relative;
         display: flex;
-        width: 100%;
+        /* Width is controlled by style (zoom level) */
+        min-width: 100%;
         height: 100%; /* Flexible height */
         max-height: 100%;
         min-height: 100px;
         bottom: 0px;
-        background-color: #111827;
-        border-radius: 0.5rem;
+        /* background-color: #111827; */
         user-select: none;
         touch-action: none;
     }
@@ -444,6 +740,7 @@
         position: relative;
         z-index: 0;
         transition: background-color 75ms;
+        min-width: 1rem;
     }
 
     .white-key.active {

@@ -52,6 +52,8 @@
             micManager.stop();
             cancelAnimationFrame(animationFrameId);
             detectedPitch = null;
+            // Resume audio context which might be suspended by mic stop on iOS
+            await audioEngine.ensureRunning();
         } else {
             try {
                 await micManager.start();
@@ -74,8 +76,9 @@
         "88": { start: 21, end: 108, name: "88 Keys (A0 - C8)" },
         "61": { start: 36, end: 96, name: "61 Keys (C2 - C7)" },
         "49": { start: 41, end: 89, name: "49 Keys (F2 - F6)" },
-        "42": { start: 41, end: 82, name: "42 Keys (F2 - A#5)" },
-        "26": { start: 48, end: 73, name: "26 Keys (C3 - C#5)" },
+        "41": { start: 41, end: 82, name: "41 Keys (F2 - A5)" },
+        "25": { start: 48, end: 72, name: "25 Keys (C3 - C5)" },
+        "13": { start: 53, end: 65, name: "13 Keys (F3 - F4)" },
     };
 
     function selectPreset() {
@@ -360,16 +363,10 @@
                 <option value="88">88 Keys (Full)</option>
                 <option value="61">61 Keys</option>
                 <option value="49">49 Keys</option>
-                <option value="42">42 Keys</option>
-                <option value="26">26 Keys</option>
-                <option value="custom">Custom</option>
+                <option value="41">41 Keys</option>
+                <option value="25">25 Keys</option>
+                <option value="13">13 Keys</option>
             </select>
-            {#if selectedPreset === "custom"}
-                <div class="custom-range">
-                    <input type="number" bind:value={rangeStart} />
-                    <input type="number" bind:value={rangeEnd} />
-                </div>
-            {/if}
         </div>
 
         <!-- Display Options -->
@@ -623,21 +620,6 @@
         align-items: center;
     }
 
-    .custom-range {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: center;
-    }
-
-    .custom-range input {
-        width: 4rem;
-        padding: 0.25rem;
-        border-radius: 0.25rem;
-        border: 1px solid #4b5563;
-        background-color: #374151;
-        color: white;
-    }
-
     select {
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
@@ -681,14 +663,15 @@
     }
 
     .piano-wrapper {
-        width: 100%;
+        width: 95%;
         background-color: rgba(21, 30, 45, 0.5);
         border: 1px solid #1f2937;
         border-radius: 0.75rem;
         padding: 1rem;
         backdrop-filter: blur(4px);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        margin-top: auto;
+        margin-top: 1rem;
+        margin: 0;
         border-bottom: none;
         height: 16rem; /* Default height for portrait */
         display: flex; /* Ensure inner keyboard expands */
@@ -815,8 +798,7 @@
         }
 
         .piano-wrapper {
-            height: 50%;
-
+            height: 60%;
             order: 3;
         }
 
