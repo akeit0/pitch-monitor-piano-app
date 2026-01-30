@@ -28,20 +28,8 @@ export class MicrophoneManager {
         }
 
         try {
-            // Try with preferred constraints first (disable processing that affects volume)
-            // Use 'ideal' instead of required so it falls back gracefully
-            try {
-                this.mediaStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        autoGainControl: { ideal: false },
-                    }
-                });
-            } catch {
-                // Fallback to basic audio if preferred constraints fail
-                //
-                console.log("Microphone: Using basic audio constraints");
-                this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            }
+            this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
 
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = 2048; // Good resolution for pitch detection
