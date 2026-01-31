@@ -1,10 +1,10 @@
-# Piano App (ピアノアプリ)
+# Pitch Monitor Piano App (ピアノアプリ)
 
 **Svelte 5** と **Tauri** で構築された、モダンで多機能なバーチャルピアノアプリケーションです。ミュージシャンや趣味でピアノを弾く方のために設計されており、レスポンシブな演奏体験、MIDIサポート、そして内蔵のピッチ検出ツールを提供します。
 
 [English version](README.md)
 
-[Demo](https://akeit0.github.io/piano-app/)
+[Demo](https://akeit0.github.io/pitch-monitor-piano-app/)
 
 ![Piano App Icon](apps/src/lib/assets/piano.svg)
 

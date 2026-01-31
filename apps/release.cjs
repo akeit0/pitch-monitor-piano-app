@@ -66,7 +66,7 @@ try {
 
     console.log(`\n✨ Successfully released version ${pkg.version}!`);
     console.log(`🔗 GitHub Actions will now build and deploy automatically.`);
-    console.log(`📝 Check: https://github.com/akeit0/piano-app/actions`);
+    console.log(`📝 Check: https://github.com/akeit0/pitch-monitor-piano-app/actions`);
 
 } catch (error) {
     console.error('❌ Release failed:', error.message);
