@@ -1,17 +1,21 @@
 {
 	"name": "piano-app",
 	"private": true,
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"tauri": "tauri",
+		"sync-version": "node -e \"const pkg=require('./package.json');const fs=require('fs');const tauriPath='./src-tauri/tauri.conf.json';const tauri=JSON.parse(fs.readFileSync(tauriPath,'utf8'));tauri.version=pkg.version;fs.writeFileSync(tauriPath,JSON.stringify(tauri,null,2)+'\\n');console.log('Synced version to',pkg.version);\"",
+		"tauri": "npm run sync-version && tauri",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"build:github": "cross-env OUT_DIR=../docs BASE_PATH=/piano-app vite build"
+		"build:github": "cross-env OUT_DIR=../docs BASE_PATH=/piano-app vite build",
+		"release:patch": "node release.cjs patch",
+		"release:minor": "node release.cjs minor",
+		"release:major": "node release.cjs major"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
