@@ -80,4 +80,4 @@ This builds the app to the `../docs` folder.
 
 ## License
 
-MIT
+Unlicense

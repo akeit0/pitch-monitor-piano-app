@@ -80,4 +80,4 @@ npm run build:github
 
 ## ライセンス
 
-MIT
+Unlicense
