@@ -37,11 +37,16 @@ jobs:
           # Get the previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           
-          # Generate changelog
+          # Generate changelog from merge commits only (PRs)
           if [ -z "$PREV_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+            CHANGELOG=$(git log --merges --pretty=format:"- %s (%h)" --first-parent)
           else
-            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --merges --pretty=format:"- %s (%h)" --first-parent)
+          fi
+          
+          # Check if there are any PRs
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="No pull requests were merged in this release."
           fi
           
           # Create release notes
